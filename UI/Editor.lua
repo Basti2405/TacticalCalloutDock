@@ -751,17 +751,24 @@ local function fensterBauen()
     end)
     zurueck:SetPoint("TOPLEFT", 16, zy)
 
-    -- Der Hinweis zur Wiederholsperre steht neben ihr, nicht im Tooltip:
-    -- Eine Sperre, die man nicht versteht, stellt man auf 0.
-    local drossHinweis = beschriftung(Y, L.CFG_THROTTLE_TIP, "GameFontDisableSmall")
-    drossHinweis:SetPoint("TOPLEFT", 260, -180)
-    drossHinweis:SetWidth(330)
-    drossHinweis:SetJustifyH("LEFT")
-
+    -- ---------------------------------------------------------------------
+    -- Die beiden Erklaerungen rechts neben den Feldern
+    -- ---------------------------------------------------------------------
+    -- Sie haengen am jeweiligen Feld, NICHT an einem festen Y-Wert. Vorher
+    -- stand der Umbruch-Hinweis neben "Deckkraft" - er war stehen geblieben,
+    -- als ein Feld darueber dazukam, und erklaerte damit die falsche Zeile.
+    -- Ein Hinweis am falschen Ort ist schlimmer als keiner.
     local umbruchHinweis = beschriftung(Y, L.CFG_WRAP_TIP, "GameFontDisableSmall")
-    umbruchHinweis:SetPoint("TOPLEFT", 260, -110)
+    umbruchHinweis:SetPoint("TOPLEFT", schalter.umbruch, "TOPRIGHT", 30, -4)
     umbruchHinweis:SetWidth(330)
     umbruchHinweis:SetJustifyH("LEFT")
+
+    -- Die Wiederholsperre braucht ihre Erklaerung sichtbar, nicht im Tooltip:
+    -- Eine Sperre, die man nicht versteht, stellt man auf 0.
+    local drossHinweis = beschriftung(Y, L.CFG_THROTTLE_TIP, "GameFontDisableSmall")
+    drossHinweis:SetPoint("TOPLEFT", schalter.drosselung, "TOPRIGHT", 30, -4)
+    drossHinweis:SetWidth(330)
+    drossHinweis:SetJustifyH("LEFT")
 
     reiterZeigen("BUTTONS")
 end
