@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Tactical Callout Dock">
+  <!-- Die Leiste selbst ist das Zeichen: drei Knoepfe, einer davon aktiv.
+       Darueber die Sprechblase - eine Ansage, die aus der Leiste heraus geht. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3ad1ff"/>
+      <stop offset="1" stop-color="#1b8fc4"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="#0d1620"/>
+
+  <!-- Sprechblase -->
+  <path d="M14 12h36a5 5 0 0 1 5 5v14a5 5 0 0 1-5 5H30l-9 8v-8h-7a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5z"
+        fill="url(#g)"/>
+  <!-- Drei Punkte: die Ansage -->
+  <circle cx="23" cy="24" r="3" fill="#0d1620"/>
+  <circle cx="32" cy="24" r="3" fill="#0d1620"/>
+  <circle cx="41" cy="24" r="3" fill="#0d1620"/>
+
+  <!-- Die Leiste darunter: drei Knoepfe, der mittlere gedrueckt -->
+  <rect x="12"   y="47" width="12" height="11" rx="3" fill="#25384a"/>
+  <rect x="26.5" y="47" width="12" height="11" rx="3" fill="#3ad1ff"/>
+  <rect x="41"   y="47" width="12" height="11" rx="3" fill="#25384a"/>
+</svg>

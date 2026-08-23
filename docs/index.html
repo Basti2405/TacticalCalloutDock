@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="de" data-lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tactical Callout Dock — Ansagen für Mythik+ auf einen Klick</title>
+<meta name="description" content="WoW-Addon: eine verschiebbare Leiste mit taktischen Ansagen für Mythik+ und Schlachtzüge. Chatnachricht, Zielmarkierung und Ping mit einem Klick.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* --------------------------------------------------------------------------
+   Tactical Callout Dock — Projektseite
+
+   Die Farben sind die des Addons: das Blau, mit dem es sich im Chat meldet,
+   und die drei Rollenfarben der Reiter. Die Seite soll aussehen wie das,
+   was sie beschreibt.
+   -------------------------------------------------------------------------- */
+:root {
+  --grund:      #0b1119;
+  --panel:      #121d28;
+  --panel-hoch: #1d2b3a;
+  --linie:      #22384c;
+  --ink:        #dce7f2;
+  --ink-leise:  #7b90a5;
+  --akzent:     #33ccff;
+
+  --tank:   #c69b6d;
+  --heiler: #59d98c;
+  --dps:    #ff7d5c;
+
+  --display: "IBM Plex Sans Condensed", "Arial Narrow", sans-serif;
+  --body:    "IBM Plex Sans", system-ui, sans-serif;
+  --mono:    "IBM Plex Mono", ui-monospace, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0;
+  background: var(--grund);
+  color: var(--ink);
+  font: 400 17px/1.65 var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sprachumschaltung. Das Addon spricht zwei Sprachen, die Beschreibung
+   dazu also auch. Ohne JavaScript bleibt Deutsch stehen. */
+:root[data-lang="de"] [lang="en"] { display: none !important; }
+:root[data-lang="en"] [lang="de"] { display: none !important; }
+
+a { color: var(--akzent); }
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--akzent);
+  outline-offset: 3px;
+}
+
+.huelle { width: min(1080px, 100% - 3rem); margin-inline: auto; }
+
+/* ---------- Kopf ---------- */
+.kopf {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.5rem 0; border-bottom: 1px solid var(--linie);
+}
+.kopf img { width: 40px; height: 40px; }
+.wortmarke { font: 700 1.35rem/1 var(--display); letter-spacing: .01em; margin-right: auto; }
+.wortmarke b { color: var(--akzent); font-weight: 700; }
+
+.kopf-links { display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap; }
+.kopf-links a { color: var(--ink-leise); text-decoration: none; font-size: .9rem; }
+.kopf-links a:hover { color: var(--ink); }
+
+.sprache {
+  background: transparent; border: 1px solid var(--linie); color: var(--ink-leise);
+  border-radius: 4px; padding: .25rem .55rem; font: 500 .8rem var(--mono); cursor: pointer;
+}
+.sprache:hover { color: var(--ink); border-color: var(--akzent); }
+
+/* ---------- Aufmacher ---------- */
+.aufmacher { padding: 3.5rem 0 1rem; }
+.augenbraue {
+  font: 500 .8rem var(--mono); letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-leise); margin: 0 0 1rem;
+}
+h1 {
+  font: 700 clamp(2rem, 5vw, 3.1rem)/1.1 var(--display);
+  margin: 0 0 1.2rem; letter-spacing: -.01em; max-width: 20ch;
+}
+h1 em { color: var(--akzent); font-style: normal; }
+.vorspann { font-size: 1.12rem; color: #b6c6d6; max-width: 62ch; margin: 0 0 2.5rem; }
+
+/* ---------- Das Instrument: die nachgebaute Leiste ---------- */
+.instrument {
+  background: var(--panel); border: 1px solid var(--linie); border-radius: 10px;
+  padding: 1.5rem; margin: 0 0 1rem;
+}
+.instrument-kopf { margin-bottom: 1.25rem; }
+.instrument-titel { font: 700 1.05rem/1.3 var(--display); margin: 0 0 .3rem; }
+.instrument-hinweis { margin: 0; font-size: .85rem; color: var(--ink-leise); }
+
+/* Reiterleiste */
+.reiter { display: flex; gap: 3px; margin-bottom: 3px; }
+.reiter button {
+  font: 500 .72rem var(--body); padding: .22rem .7rem; cursor: pointer;
+  background: rgba(0,0,0,.45); color: var(--ink-leise);
+  border: 0; border-radius: 3px 3px 0 0;
+}
+.reiter button[aria-selected="true"] { background: #3399d9; color: #fff; }
+
+/* Die Leiste */
+.leiste {
+  display: flex; gap: 4px; padding: 4px;
+  background: rgba(0,0,0,.55); border: 1px solid rgba(0,0,0,.8);
+  border-radius: 3px; width: max-content; max-width: 100%; flex-wrap: wrap;
+}
+.taste {
+  width: 52px; height: 52px; padding: 0; cursor: pointer; position: relative;
+  background: #0e161f; border: 1px solid #000; border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+}
+.taste:hover { background: #17222e; }
+.taste[aria-pressed="true"] { outline: 2px solid var(--akzent); outline-offset: -2px; }
+.taste svg { width: 30px; height: 30px; }
+.taste .kuerzel {
+  position: absolute; left: 1px; right: 1px; bottom: 1px;
+  font: 500 .62rem/1.4 var(--body); color: #fff;
+  background: rgba(0,0,0,.72); border-radius: 0 0 2px 2px;
+}
+
+/* Die Ausgabe unter der Leiste */
+.ausgabe { margin-top: 1.25rem; display: grid; gap: .6rem; }
+.chatzeile {
+  font: 400 .95rem var(--mono); background: rgba(0,0,0,.4);
+  border-left: 3px solid var(--akzent); padding: .6rem .85rem; border-radius: 0 4px 4px 0;
+  overflow-wrap: anywhere;
+}
+.chatzeile .kanal { color: var(--akzent); }
+.wirkungen { display: flex; gap: .5rem; flex-wrap: wrap; }
+.marke {
+  font: 500 .78rem var(--body); padding: .2rem .6rem; border-radius: 999px;
+  background: var(--panel-hoch); color: var(--ink-leise); border: 1px solid var(--linie);
+}
+.marke.an { color: var(--ink); border-color: var(--akzent); }
+
+/* ---------- Abschnitte ---------- */
+section { padding: 3.5rem 0; border-top: 1px solid var(--linie); }
+h2 { font: 700 1.7rem/1.2 var(--display); margin: 0 0 1.5rem; }
+h3 { font: 600 1.05rem/1.3 var(--body); margin: 0 0 .4rem; }
+
+.raster { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+.karte { background: var(--panel); border: 1px solid var(--linie); border-radius: 8px; padding: 1.25rem; }
+.karte p { margin: 0; color: #a9bbcb; font-size: .95rem; }
+
+/* Kanaltabelle */
+table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+th, td { text-align: left; padding: .6rem .5rem; border-bottom: 1px solid var(--linie); }
+th { font: 600 .8rem var(--mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-leise); }
+td code, .befehl code { font: 500 .88rem var(--mono); color: var(--akzent); }
+
+.pfeil { color: var(--ink-leise); }
+
+ol.schritte { padding-left: 1.2rem; }
+ol.schritte li { margin-bottom: .6rem; }
+code { font: 500 .88rem var(--mono); background: rgba(255,255,255,.05); padding: .1rem .35rem; border-radius: 3px; }
+
+.knopf {
+  display: inline-block; margin-top: 1rem; padding: .7rem 1.4rem;
+  background: var(--akzent); color: #06121b; font-weight: 600;
+  border-radius: 5px; text-decoration: none;
+}
+.knopf:hover { background: #5ad8ff; }
+
+.hinweis { color: var(--ink-leise); font-size: .9rem; }
+
+footer {
+  display: flex; gap: 1.5rem; flex-wrap: wrap;
+  padding: 2rem 0 3rem; border-top: 1px solid var(--linie);
+  color: var(--ink-leise); font-size: .85rem;
+}
+footer a { color: var(--ink-leise); }
+</style>
+</head>
+<body>
+
+<div class="huelle">
+
+  <header class="kopf">
+    <img src="logo.svg" alt="">
+    <span class="wortmarke">Tactical<b>Dock</b></span>
+    <nav class="kopf-links">
+      <a href="#was"><span lang="de">Was es tut</span><span lang="en">What it does</span></a>
+      <a href="#kanal"><span lang="de">Kanalwahl</span><span lang="en">Channels</span></a>
+      <a href="#installieren"><span lang="de">Installieren</span><span lang="en">Install</span></a>
+      <a href="https://github.com/Basti2405/TacticalCalloutDock">GitHub</a>
+      <button class="sprache" id="sprache" type="button" aria-label="Sprache wechseln / Switch language">EN</button>
+    </nav>
+  </header>
+
+  <div class="aufmacher">
+    <p class="augenbraue">
+      <span lang="de">World-of-Warcraft-Addon · Midnight 12.1.0</span>
+      <span lang="en">World of Warcraft addon · Midnight 12.1.0</span>
+    </p>
+
+    <h1>
+      <span lang="de">Bis die Zeile getippt ist, ist der <em>Pull gelaufen</em>.</span>
+      <span lang="en">By the time the line is typed, the <em>pull is over</em>.</span>
+    </h1>
+
+    <p class="vorspann">
+      <span lang="de">Im Schlüsselstein ist die Ansage oft wichtiger als die Rotation – nur hat
+        man beim Tippen beide Hände am Charakter. Tactical Callout Dock legt eine kleine
+        Leiste auf den Bildschirm: ein Klick, und die Ansage steht im richtigen Kanal,
+        der Totenschädel sitzt auf dem Ziel und der Ping ist gesetzt.</span>
+      <span lang="en">In a keystone the callout often matters more than the rotation – but typing
+        needs both hands. Tactical Callout Dock puts a small bar on your screen: one click,
+        and the callout is in the right channel, the skull is on the target and the ping
+        is placed.</span>
+    </p>
+
+    <!-- ------------------------------------------------------------------
+         Das Kernstueck: die Leiste selbst, anklickbar.
+
+         Sie zeigt in einem Bild, was das Addon tut - und was ein Klick
+         AUSLOEST: die Chatzeile, den Kanal, die Markierung, den Ping.
+         Genau die vier Dinge, die man sonst in Prosa erklaeren muesste.
+         ------------------------------------------------------------------ -->
+    <div class="instrument">
+      <div class="instrument-kopf">
+        <h2 class="instrument-titel">
+          <span lang="de">Zum Ausprobieren: eine Leiste wie im Spiel</span>
+          <span lang="en">Try it: the dock as it looks in game</span>
+        </h2>
+        <p class="instrument-hinweis">
+          <span lang="de">Reiter wechselt die Rolle, Klick auf einen Knopf zeigt, was er auslösen würde.</span>
+          <span lang="en">The tabs switch role; clicking a button shows what it would trigger.</span>
+        </p>
+      </div>
+
+      <div class="reiter" role="tablist" id="reiter">
+        <button type="button" role="tab" data-rolle="TANK"    aria-selected="false"><span lang="de">Tank</span><span lang="en">Tank</span></button>
+        <button type="button" role="tab" data-rolle="HEILER"  aria-selected="false"><span lang="de">Heiler</span><span lang="en">Healer</span></button>
+        <button type="button" role="tab" data-rolle="DPS"     aria-selected="true"><span lang="de">Schaden</span><span lang="en">Damage</span></button>
+      </div>
+
+      <div class="leiste" id="leiste"></div>
+
+      <div class="ausgabe">
+        <p class="chatzeile" id="chatzeile"></p>
+        <div class="wirkungen">
+          <span class="marke" id="m-marke"></span>
+          <span class="marke" id="m-ping"></span>
+        </div>
+      </div>
+    </div>
+
+    <p class="hinweis">
+      <span lang="de">Die Leiste oben ist eine Nachbildung in HTML – im Spiel trägt sie die
+        Symbole von Blizzard und lässt sich frei verschieben, drehen und in der Größe ändern.</span>
+      <span lang="en">The dock above is an HTML mock-up – in game it carries Blizzard's own icons
+        and can be moved, rotated and resized freely.</span>
+    </p>
+  </div>
+
+  <!-- ==================================================================== -->
+  <section id="was">
+    <h2><span lang="de">Was es tut</span><span lang="en">What it does</span></h2>
+
+    <div class="raster">
+      <div class="karte">
+        <h3><span lang="de">Drei Aktionen auf einem Knopf</span><span lang="en">Three actions on one button</span></h3>
+        <p><span lang="de">Chatnachricht, Zielmarkierung und Ping – einzeln oder zusammen,
+          ausgelöst durch einen einzigen Klick. Die Markierung kommt zuerst, damit der
+          Totenschädel schon sitzt, wenn die Gruppe hinsieht.</span>
+          <span lang="en">Chat message, raid marker and ping – separately or together, from a
+          single click. The marker goes first, so the skull is already in place when the
+          group looks.</span></p>
+      </div>
+
+      <div class="karte">
+        <h3><span lang="de">Drei Rollenprofile, fertig bestückt</span><span lang="en">Three role profiles, ready to use</span></h3>
+        <p><span lang="de">Tank, Heiler und Schaden mit je acht Ansagen aus dem echten
+          Schlüsselstein-Alltag. Umschalten über die Reiter an der Leiste oder
+          <code>/tcd tank</code>.</span>
+          <span lang="en">Tank, healer and damage, eight callouts each, taken from actual
+          keystone runs. Switch with the tabs on the dock or <code>/tcd tank</code>.</span></p>
+      </div>
+
+      <div class="karte">
+        <h3><span lang="de">Editor im Spiel</span><span lang="en">In-game editor</span></h3>
+        <p><span lang="de">Knöpfe anlegen, bearbeiten, umsortieren, löschen – ohne eine einzige
+          <code>.lua</code> anzufassen. Mit Vorschau: Wer <code>%t</code> tippt, sieht direkt
+          darunter, welcher Name gleich im Chat steht.</span>
+          <span lang="en">Add, edit, reorder and delete buttons without touching a single
+          <code>.lua</code> file. With a preview: type <code>%t</code> and the name that will
+          appear in chat is shown right below.</span></p>
+      </div>
+
+      <div class="karte">
+        <h3><span lang="de">Es arbeitet auch im Kampf</span><span lang="en">It works during combat</span></h3>
+        <p><span lang="de">Kein Knopf wirkt eine Fähigkeit – deshalb braucht keiner eine
+          geschützte Vorlage. Profilwechsel, Größe, Ausrichtung und selbst das Verschieben
+          funktionieren mitten im Pull. Es gibt keine Zeile, die etwas „später nachholt“.</span>
+          <span lang="en">No button casts a spell, so none needs a secure template. Switching
+          profiles, size, direction and even dragging all work mid-pull. Not one line defers
+          work “until after combat”.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section id="kanal">
+    <h2><span lang="de">Der Kanal stimmt von selbst</span><span lang="en">The channel is chosen for you</span></h2>
+
+    <p class="vorspann">
+      <span lang="de">Hier liegen die meisten Ansage-Addons daneben: Ein fest auf
+        <code>RAID</code> gestellter Knopf sendet in einer Fünfergruppe <strong>nichts</strong> –
+        und meldet das auch nicht. Man drückt, sieht nichts und hält das Addon für kaputt.
+        Dieselbe Taste geht deshalb hier je nach Lage woandershin.</span>
+      <span lang="en">This is where most callout addons get it wrong: a button hard-wired to
+        <code>RAID</code> sends <strong>nothing</strong> in a five-player group – and does not
+        say so. You press it, see nothing, and assume the addon is broken. So the same key
+        goes somewhere different depending on where you are.</span>
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th><span lang="de">Wo du bist</span><span lang="en">Where you are</span></th>
+          <th><span lang="de">Wohin die Ansage geht</span><span lang="en">Where the callout goes</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><span lang="de">Schlüsselstein oder Schlachtzugsbrowser</span><span lang="en">Keystone or raid finder</span></td>
+            <td><span class="pfeil">→</span> <code>INSTANCE_CHAT</code></td></tr>
+        <tr><td><span lang="de">Schlachtzug</span><span lang="en">Raid</span></td>
+            <td><span class="pfeil">→</span> <code>RAID</code></td></tr>
+        <tr><td><span lang="de">Gruppe</span><span lang="en">Party</span></td>
+            <td><span class="pfeil">→</span> <code>PARTY</code></td></tr>
+        <tr><td><span lang="de">allein unterwegs</span><span lang="en">on your own</span></td>
+            <td><span class="pfeil">→</span> <code>SAY</code></td></tr>
+      </tbody>
+    </table>
+
+    <p class="hinweis" style="margin-top:1.5rem">
+      <span lang="de">Auch fest eingestellte Kanäle fallen geordnet zurück, statt ins Leere zu
+        senden: Eine Schlachtzugswarnung ohne Anführerrecht wird zu normalem
+        Schlachtzugschat, <code>PARTY</code> in einer Instanzgruppe zu <code>INSTANCE_CHAT</code>.
+        Und wenn eine Ansage dadurch in <code>/sagen</code> landet, sagt das Addon es einmal.</span>
+      <span lang="en">Fixed channels fall back in order too, rather than sending into the void:
+        a raid warning without lead becomes ordinary raid chat, <code>PARTY</code> inside an
+        instance group becomes <code>INSTANCE_CHAT</code>. And if a callout ends up in
+        <code>/say</code> because of it, the addon tells you once.</span>
+    </p>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section>
+    <h2><span lang="de">Befehle</span><span lang="en">Commands</span></h2>
+    <table class="befehl">
+      <tbody>
+        <tr><td><code>/tcd</code></td><td><span lang="de">Leiste ein- oder ausblenden</span><span lang="en">show or hide the dock</span></td></tr>
+        <tr><td><code>/tcd config</code></td><td><span lang="de">Editor öffnen</span><span lang="en">open the editor</span></td></tr>
+        <tr><td><code>/tcd tank</code> · <code>heiler</code> · <code>dps</code></td><td><span lang="de">Profil wechseln</span><span lang="en">switch profile</span></td></tr>
+        <tr><td><code>/tcd lock</code></td><td><span lang="de">Leiste feststellen oder lösen</span><span lang="en">lock or unlock the dock</span></td></tr>
+        <tr><td><code>/tcd reset</code></td><td><span lang="de">zurück in die Bildschirmmitte</span><span lang="en">back to the centre of the screen</span></td></tr>
+        <tr><td><code>/tcd defaults</code></td><td><span lang="de">mitgelieferte Ansagen wiederherstellen</span><span lang="en">restore the built-in callouts</span></td></tr>
+        <tr><td><code>/tcd doctor</code></td><td><span lang="de">Selbstdiagnose – bei Problemen zuerst</span><span lang="en">self-check – start here when something is off</span></td></tr>
+      </tbody>
+    </table>
+    <p class="hinweis" style="margin-top:1.2rem">
+      <span lang="de">Umschalt-Klick oder Rechtsklick auf einen Knopf der Leiste öffnet den
+        Editor genau bei diesem Knopf.</span>
+      <span lang="en">Shift-click or right-click a button on the dock to open the editor at
+        exactly that button.</span>
+    </p>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section>
+    <h2><span lang="de">Zu den Addon-Regeln</span><span lang="en">On the addon rules</span></h2>
+
+    <div class="raster">
+      <div class="karte">
+        <h3><span lang="de">Es automatisiert nichts.</span><span lang="en">It automates nothing.</span></h3>
+        <p><span lang="de">Kein Timer, der etwas sendet. Kein Spielereignis, an dem eine
+          Nachricht hängt. Keine Wiederholung, keine Warteschlange. Eine Ansage entsteht
+          ausschließlich dort, wo ein Mensch auf einen Knopf drückt – das ist auch die
+          Bedingung, an die Blizzard die Ping-Schnittstelle knüpft.</span>
+          <span lang="en">No timer that sends anything. No game event a message hangs on. No
+          repetition, no queue. A callout only ever happens where a human presses a button –
+          which is also the condition Blizzard attaches to the ping API.</span></p>
+      </div>
+      <div class="karte">
+        <h3><span lang="de">Kein Knopf wirkt eine Fähigkeit.</span><span lang="en">No button casts a spell.</span></h3>
+        <p><span lang="de">Das ist keine nachträgliche Einschränkung, sondern die
+          Entwurfsentscheidung, aus der die Kampftauglichkeit erst folgt: Chatnachricht,
+          Zielmarkierung und Ping sind ungeschützte Funktionen.</span>
+          <span lang="en">Not a restriction bolted on afterwards, but the design decision the
+          combat behaviour follows from: chat message, raid marker and ping are all
+          unprotected functions.</span></p>
+      </div>
+      <div class="karte">
+        <h3><span lang="de">Es kommt ohne Fremdbibliotheken aus.</span><span lang="en">It ships without external libraries.</span></h3>
+        <p><span lang="de">Kein Ace, kein LibDataBroker, kein LibDBIcon. Der Knopf an der
+          Minikarte ist von Hand gebaut. Dafür findet keine Sammelleiste wie Titan Panel
+          dieses Addon – das ist der Preis, und er steht so auch im README.</span>
+          <span lang="en">No Ace, no LibDataBroker, no LibDBIcon. The minimap button is built by
+          hand. The price is that brokers like Titan Panel will not find this addon – that
+          trade-off is stated in the README too.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <section id="installieren">
+    <h2><span lang="de">Installieren</span><span lang="en">Install</span></h2>
+    <ol class="schritte">
+      <li><p><span lang="de">Das Archiv herunterladen und entpacken.</span>
+             <span lang="en">Download the archive and unpack it.</span></p></li>
+      <li><p><span lang="de">Den Ordner <strong>TacticalCalloutDock</strong> nach
+             <code>World of Warcraft\_retail_\Interface\AddOns\</code> legen.</span>
+             <span lang="en">Put the <strong>TacticalCalloutDock</strong> folder into
+             <code>World of Warcraft\_retail_\Interface\AddOns\</code>.</span></p></li>
+      <li><p><span lang="de">Im Spiel <code>/tcd</code> tippen. Wenn etwas nicht stimmt,
+             sagt <code>/tcd doctor</code>, was.</span>
+             <span lang="en">Type <code>/tcd</code> in game. If something is off,
+             <code>/tcd doctor</code> says what.</span></p></li>
+    </ol>
+    <a class="knopf" href="https://github.com/Basti2405/TacticalCalloutDock/releases">
+      <span lang="de">Zu den Veröffentlichungen</span><span lang="en">Go to releases</span>
+    </a>
+  </section>
+
+  <footer>
+    <span>Tactical Callout Dock · MIT</span>
+    <span><span lang="de">von</span><span lang="en">by</span> Basti2405</span>
+    <a href="https://github.com/Basti2405/TacticalCalloutDock"><span lang="de">Quelltext und Fehlermeldungen</span><span lang="en">Source and issues</span></a>
+  </footer>
+
+</div>
+
+<script>
+/* --------------------------------------------------------------------------
+   Die nachgebaute Leiste.
+
+   Dieselben Ansagen wie in Daten/Vorgaben.lua, in beiden Sprachen. Das ist
+   bewusst doppelt gehalten statt aus dem Addon erzeugt: Die Seite soll ohne
+   Bauschritt auskommen, und drei mal acht Zeilen pflegt man von Hand.
+   -------------------------------------------------------------------------- */
+(function () {
+  "use strict";
+
+  /* Die Symbole. Als Inline-SVG, weil Blizzards Icons nicht frei verwendbar
+     sind - die Raidmarker sind ohnehin als Form erkennbarer als als Wort. */
+  var S = {
+    lauf:   '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd4ff" stroke-width="2" stroke-linecap="round"><path d="M4 18h6M3 13h9M6 8h8"/><path d="M14 6l6 6-6 6"/></svg>',
+    uhr:    '<svg viewBox="0 0 24 24" fill="none" stroke="#d8b25c" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2" stroke-linecap="round"/></svg>',
+    auge:   '<svg viewBox="0 0 24 24" fill="none" stroke="#9aa8b8" stroke-width="2"><path d="M2 12s4-6 10-6 10 6 10 6-4 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.5" fill="#9aa8b8" stroke="none"/><path d="M4 4l16 16" stroke="#4d5b6b"/></svg>',
+    hand:   '<svg viewBox="0 0 24 24" fill="none" stroke="#e0c07a" stroke-width="2" stroke-linecap="round"><path d="M12 21V8M8 21v-9M16 21v-9M6 12a6 6 0 0 1 12 0"/></svg>',
+    ruf:    '<svg viewBox="0 0 24 24" fill="none" stroke="#ff9a5c" stroke-width="2" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8a5 5 0 0 1 0 8"/></svg>',
+    schild: '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd4ff" stroke-width="2" stroke-linejoin="round"><path d="M12 3l8 3v6c0 5-4 8-8 9-4-1-8-4-8-9V6l8-3z"/></svg>',
+    trank:  '<svg viewBox="0 0 24 24" fill="none" stroke="#7fb6ff" stroke-width="2" stroke-linejoin="round"><path d="M9 3h6v4l3 8a4 4 0 0 1-4 6H10a4 4 0 0 1-4-6l3-8V3z"/><path d="M6.6 14h10.8" /></svg>',
+    becher: '<svg viewBox="0 0 24 24" fill="none" stroke="#8fd8a8" stroke-width="2" stroke-linejoin="round"><path d="M5 8h11v8a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4V8z"/><path d="M16 10h2a2 2 0 0 1 0 4h-2"/></svg>',
+    funke:  '<svg viewBox="0 0 24 24" fill="none" stroke="#c78fe8" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2L12 3z"/></svg>',
+    kreuzH: '<svg viewBox="0 0 24 24" fill="none" stroke="#8fe0b0" stroke-width="2" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg>',
+    stopp:  '<svg viewBox="0 0 24 24" fill="none" stroke="#ff8f8f" stroke-width="2" stroke-linejoin="round"><path d="M8 3h8l5 5v8l-5 5H8l-5-5V8l5-5z"/><path d="M9 9l6 6M15 9l-6 6" stroke-linecap="round"/></svg>',
+    blitz:  '<svg viewBox="0 0 24 24" fill="#ffd35c" stroke="none"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z"/></svg>',
+    pfeil:  '<svg viewBox="0 0 24 24" fill="none" stroke="#7fd4ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>',
+    adds:   '<svg viewBox="0 0 24 24" fill="none" stroke="#ff9a5c" stroke-width="2" stroke-linecap="round"><circle cx="7" cy="8" r="2.5"/><circle cx="15" cy="7" r="2.5"/><circle cx="19" cy="13" r="2"/><path d="M3 20c0-3 2-5 4-5s4 2 4 5M12 20c0-2.5 1.6-4 3-4s3 1.5 3 4"/></svg>',
+    /* Raidmarker als erkennbare Formen */
+    schaedel: '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#e8e8e8"/><path d="M12 3c-4.4 0-7 2.9-7 6.6 0 2.3 1 3.7 2.2 4.6V17c0 1 .8 1.8 1.8 1.8h6c1 0 1.8-.8 1.8-1.8v-2.8C18 13.3 19 11.9 19 9.6 19 5.9 16.4 3 12 3z" fill="#2b2b2b"/><circle cx="9.3" cy="9.6" r="1.9" fill="#e8e8e8"/><circle cx="14.7" cy="9.6" r="1.9" fill="#e8e8e8"/><path d="M10.4 14.2h3.2v3.4h-3.2z" fill="#e8e8e8"/></svg>',
+    kreuz:    '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#d94141"/><path d="M7 7l10 10M17 7L7 17" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>',
+    mond:     '<svg viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#7fb6ff"/><path d="M15.5 4.5A8 8 0 1 0 19 15 6.5 6.5 0 0 1 15.5 4.5z" fill="#fff"/></svg>'
+  };
+
+  /* Die drei Profile. text: [deutsch, englisch] */
+  var PROFILE = {
+    TANK: [
+      { k: ["LoS","LoS"],       s: S.lauf,   t: ["Ziehe um die Ecke – Sichtlinie, bleibt hinter mir","Pulling around the corner - line of sight, stay behind me"] },
+      { k: ["Pat","Pat"],       s: S.uhr,    t: ["Warten, Patrouille kommt","Wait for the patrol"] },
+      { k: ["Skip","Skip"],     s: S.auge,   t: ["Gruppe wird geskippt – Unsichtbarkeit jetzt","Skipping this pack - invisibility now"] },
+      { k: ["Warte","Wait"],    s: S.hand,   t: ["Sammle noch ein – bitte noch nicht anfangen","Still gathering - do not pull yet"] },
+      { k: ["Groß","Big"],      s: S.ruf,    t: ["Großer Pull – Cooldowns bitte","Big pull incoming - cooldowns please"] },
+      { k: ["Schädel","Skull"], s: S.schaedel, marke: ["Totenschädel","Skull"], t: ["Fokus Totenschädel %t","Focus skull %t"] },
+      { k: ["Kite","Kite"],     s: S.pfeil,  t: ["Ich kite den – bitte nicht spotten","Kiting this one - do not taunt"] },
+      { k: ["Hilfe","Help"],    s: S.schild, t: ["Bin tief – externen Cooldown bitte","I am low - external cooldown please"] }
+    ],
+    HEILER: [
+      { k: ["Mana","Mana"],     s: S.trank,  t: ["Brauche Mana – kurze Pause bitte","Need mana - short break please"] },
+      { k: ["Trinken","Drink"], s: S.becher, t: ["Ich trinke, einen Moment","Drinking, give me a moment"] },
+      { k: ["Defs","Defs"],     s: S.schild, t: ["Defensives jetzt – gleich kommt viel Schaden","Defensives now - heavy damage incoming"] },
+      { k: ["Disp","Disp"],     s: S.funke,  t: ["Ich entzaubere – bitte auseinander","Dispelling - spread out"] },
+      { k: ["Rez","Rez"],       s: S.kreuzH, ping: ["Hilfe","Assist"], t: ["Bin tot – Kampfrez bitte","I am down - combat res please"] },
+      { k: ["Pat","Pat"],       s: S.uhr,    t: ["Warten, Patrouille kommt","Wait for the patrol"] },
+      { k: ["Stopp","Stop"],    s: S.stopp,  t: ["Bitte noch nicht pullen","Do not pull yet"] },
+      { k: ["Lust","Lust"],     s: S.blitz,  t: ["Kampfrausch bei diesem Pull","Bloodlust on this pull"] }
+    ],
+    DPS: [
+      { k: ["Kick","Kick"],     s: S.stopp,  t: ["Unterbrecher stehen – ich kicke zuerst","Interrupts ready - I kick first"] },
+      { k: ["Schädel","Skull"], s: S.schaedel, marke: ["Totenschädel","Skull"], t: ["Fokus Totenschädel %t","Focus skull %t"] },
+      { k: ["Kreuz","Cross"],   s: S.kreuz,  marke: ["Kreuz","Cross"], t: ["Kreuz ist das zweite Ziel","Cross is the second target"] },
+      { k: ["CC","CC"],         s: S.mond,   marke: ["Mond","Moon"], t: ["Mond ist unter Kontrolle – bitte nicht brechen","Crowd control on moon - do not break it"] },
+      { k: ["CDs","CDs"],       s: S.ruf,    t: ["Meine Cooldowns sind bereit – los","My cooldowns are up - go"] },
+      { k: ["Komme","OMW"],     s: S.pfeil,  ping: ["Bin unterwegs","On my way"], t: ["Bin unterwegs","On my way"] },
+      { k: ["Adds","Adds"],     s: S.adds,   ping: ["Warnung","Warning"], t: ["Adds kommen auf meiner Seite","Adds incoming on my side"] },
+      { k: ["Halt","Hold"],     s: S.uhr,    t: ["Meine Cooldowns sind unten – kurz halten","My cooldowns are down - hold a moment"] }
+    ]
+  };
+
+  var leiste    = document.getElementById("leiste");
+  var chatzeile = document.getElementById("chatzeile");
+  var mMarke    = document.getElementById("m-marke");
+  var mPing     = document.getElementById("m-ping");
+  var reiter    = document.getElementById("reiter");
+
+  var rolle = "DPS";
+  var gewaehlt = 1;   /* der Schaedel-Knopf: er zeigt Nachricht, Marke und %t auf einmal */
+
+  function sprache() {
+    return document.documentElement.dataset.lang === "en" ? 1 : 0;
+  }
+
+  /* Der Platzhalter %t. Auf der Seite gibt es kein Ziel - also steht dort
+     dasselbe, was das Addon einsetzt: ein lesbarer Ersatztext. */
+  function fuellen(text, i) {
+    return text.replace(/%t/g, i ? "Nightfall Warden" : "Dämmerwächter");
+  }
+
+  function zeichnen() {
+    var i = sprache();
+    var liste = PROFILE[rolle];
+
+    leiste.innerHTML = "";
+    liste.forEach(function (eintrag, index) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "taste";
+      b.setAttribute("aria-pressed", index === gewaehlt ? "true" : "false");
+      b.innerHTML = eintrag.s + '<span class="kuerzel">' + eintrag.k[i] + "</span>";
+      b.addEventListener("click", function () {
+        gewaehlt = index;
+        zeichnen();
+      });
+      leiste.appendChild(b);
+    });
+
+    var aktiv = liste[gewaehlt] || liste[0];
+
+    /* Der Kanal: auf der Seite immer der Fall, der im Schluesselstein gilt. */
+    chatzeile.innerHTML =
+      '<span class="kanal">[' + (i ? "Instance" : "Instanz") + "] </span>" +
+      fuellen(aktiv.t[i], i);
+
+    if (aktiv.marke) {
+      mMarke.textContent = (i ? "Marker: " : "Markierung: ") + aktiv.marke[i];
+      mMarke.className = "marke an";
+    } else {
+      mMarke.textContent = i ? "no marker" : "keine Markierung";
+      mMarke.className = "marke";
+    }
+
+    if (aktiv.ping) {
+      mPing.textContent = "Ping: " + aktiv.ping[i];
+      mPing.className = "marke an";
+    } else {
+      mPing.textContent = i ? "no ping" : "kein Ping";
+      mPing.className = "marke";
+    }
+  }
+
+  Array.prototype.forEach.call(reiter.querySelectorAll("button"), function (b) {
+    b.addEventListener("click", function () {
+      rolle = b.dataset.rolle;
+      gewaehlt = rolle === "DPS" ? 1 : 0;
+      Array.prototype.forEach.call(reiter.querySelectorAll("button"), function (x) {
+        x.setAttribute("aria-selected", x === b ? "true" : "false");
+      });
+      zeichnen();
+    });
+  });
+
+  /* --------------------------------------------------------------------
+     Sprachumschaltung. Bewusst winzig: Der Zustand haengt an einem Attribut
+     am Wurzelelement, die CSS-Regeln oben erledigen den Rest. Ohne
+     JavaScript bleibt die Seite auf Deutsch stehen und ist vollstaendig.
+     -------------------------------------------------------------------- */
+  var wurzel = document.documentElement;
+  var knopf  = document.getElementById("sprache");
+
+  function setzen(spr) {
+    wurzel.dataset.lang = spr;
+    wurzel.lang = spr;
+    knopf.textContent = spr === "de" ? "EN" : "DE";
+    try { localStorage.setItem("tcd-sprache", spr); } catch (e) {}
+    zeichnen();
+  }
+
+  var gemerkt;
+  try { gemerkt = localStorage.getItem("tcd-sprache"); } catch (e) {}
+  if (!gemerkt) {
+    gemerkt = (navigator.language || "de").slice(0, 2) === "de" ? "de" : "en";
+  }
+  setzen(gemerkt);
+
+  knopf.addEventListener("click", function () {
+    setzen(wurzel.dataset.lang === "de" ? "en" : "de");
+  });
+})();
+</script>
+
+</body>
+</html>
