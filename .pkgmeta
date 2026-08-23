@@ -1,0 +1,38 @@
+# .pkgmeta - Bauanleitung fuer den BigWigs-Packager
+#
+# Ohne diese Datei landet das GESAMTE Repository im Auslieferungspaket -
+# einschliesslich der Werkzeuge, der Tests und (falls vorhanden) des gebauten
+# Lua unter .werkzeuge/ mit seinen Binaerdateien. Das ist bei CurseForge ein
+# sicherer Ablehnungsgrund.
+#
+# Was hier NICHT steht, kommt mit ins Paket. README, LICENSE und CHANGELOG
+# bleiben deshalb bewusst drin: Sie gehoeren zu dem, was der Spieler bekommt.
+#
+# Ausprobieren, ohne irgendetwas hochzuladen:
+#   curl -s https://raw.githubusercontent.com/BigWigsMods/packager/master/release.sh | bash -s -- -d -o
+# Danach in .release/ nachsehen, was tatsaechlich im Paket liegt.
+
+package-as: TacticalCalloutDock
+
+# Der Changelog kommt aus der gepflegten Datei statt aus den Commit-Texten.
+manual-changelog:
+    filename: CHANGELOG.md
+    markup-type: markdown
+
+# Keine "externals" - dieses Addon bringt keine Fremdbibliotheken mit.
+# Die Begruendung steht im Kopf der .toc.
+
+ignore:
+    # Entwicklungswerkzeuge und alles, was nur im Repository Sinn ergibt.
+    - .github
+    - .werkzeuge
+    - Tests
+    - tools
+    - .luacheckrc
+    - .editorconfig
+    - .gitignore
+    - .pkgmeta
+
+    # Die Projektseite. Sie wird von GitHub Pages aus docs/ ausgeliefert und
+    # hat im AddOns-Ordner des Spielers nichts verloren.
+    - docs

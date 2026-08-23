@@ -1,0 +1,41 @@
+# .editorconfig - einheitliche Formatierung ueber Editoren hinweg
+# IntelliJ, VS Code und die meisten anderen lesen das von selbst.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 4
+
+[*.lua]
+indent_size = 4
+max_line_length = 120
+
+[*.md]
+# In Markdown sind zwei Leerzeichen am Zeilenende ein Zeilenumbruch.
+trim_trailing_whitespace = false
+
+[*.toc]
+# WoW liest die .toc zeilenweise - Tabs oder Leerzeichen am Anfang stoeren.
+indent_style = space
+indent_size = 0
+
+[*.{yml,yaml,xml}]
+indent_size = 4
+# LF, nicht CRLF: In den Workflows stehen eingebettete Shell-Bloecke ("run: |").
+# Mit CRLF haengt an jedem Befehl ein \r, und der Runner bricht mit
+# Meldungen ab, die nach allem aussehen ausser nach dem wahren Grund.
+end_of_line = lf
+
+[*.sh]
+end_of_line = lf
+indent_size = 2
+
+# Die geholten Bibliotheken gehoeren uns nicht - an ihrer Formatierung wird
+# nichts geradegezogen.
+[Libs/**]
+trim_trailing_whitespace = false
+insert_final_newline = false

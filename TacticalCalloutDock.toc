@@ -1,0 +1,74 @@
+## Interface: 120100
+# Passt zu Live-Patch 12.1.0 (Midnight).
+# Bei neuem Patch: aktuelle Nummer aus einem vorhandenen Addon (dessen .toc)
+# uebernehmen, dann ist der "veraltet"-Hinweis im Addon-Menue weg.
+# ACHTUNG: Die Nummer sagt nur "Addon ist fuer diesen Patch gebaut". Ob die
+# benutzten Schnittstellen noch da sind, beantwortet  /tcd doctor  im Spiel.
+
+## Title: Tactical Callout Dock
+## Notes: A draggable dock of one-click tactical callouts for Mythic+ and raids: chat message, raid marker and ping in a single click.
+## Notes-deDE: Eine verschiebbare Leiste mit taktischen Ansagen fuer Mythik+ und Schlachtzuege: Chatnachricht, Zielmarkierung und Ping mit einem Klick.
+## Author: Basti2405
+## Version: 0.1.0
+## IconTexture: Interface\Icons\Ability_Warrior_RallyingCry
+
+## SavedVariables: TacticalCalloutDockDB
+
+# ---------------------------------------------------------------------------
+# KEINE Fremdbibliotheken.
+# ---------------------------------------------------------------------------
+# StatCompass und TacticalDebrief binden Ace, LibDataBroker und LibDBIcon ein -
+# hier bewusst nicht. Dieses Addon zeichnet ein paar Rahmen und schickt eine
+# Chatzeile; dafuer braucht es weder ein Fenster-Framework noch eine
+# Datenbankschicht. Der Minimap-Knopf ist in UI\Minimap.lua von Hand gebaut
+# (rund 130 Zeilen). Damit gibt es nichts nachzuladen, nichts zu
+# aktualisieren und nichts, was bei einem Patch fremd bricht.
+#
+# Folge fuer die Entwicklung: es gibt kein  tools/libs.sh  und kein
+# Libs\embeds.xml . Wer das Repository klont, kann sofort starten.
+
+# ---------------------------------------------------------------------------
+# Angaben fuer die Verteilplattformen. Die Projekt-IDs traegt man nach dem
+# Anlegen des jeweiligen Projekts nach - der Packager liest sie von hier.
+# ---------------------------------------------------------------------------
+## X-License: MIT
+## X-Website: https://basti2405.github.io/TacticalCalloutDock/
+## X-Category: Group Utility
+# ## X-Curse-Project-ID:
+# ## X-Wago-ID:
+# ## X-WoWI-ID:
+
+# ---------------------------------------------------------------------------
+# Ladereihenfolge: Sprachen, Bruecke, Daten, Logik, Oberflaeche, Core.
+# Grund: Core startet beim Login alles auf - da muss der Rest schon dastehen.
+# ---------------------------------------------------------------------------
+
+# Sprachdateien. enUS ist die Grundlage und muss vollstaendig sein; alles
+# Weitere ueberschreibt nur einzelne Schluessel.
+Locales\enUS.lua
+Locales\deDE.lua
+
+# Bruecke zu den WoW-Schnittstellen. Muss ganz vorne stehen: Jede andere Datei
+# holt sich ihre WoW-Funktionen von hier.
+Logik\Kompat.lua
+
+# Reine Daten - die Rollenvorgaben. Hier wird nichts berechnet; das ist die
+# Datei, in der neue Ansagen fuer eine Saison landen.
+Daten\Vorgaben.lua
+
+# Logik. Reihenfolge nach Abhaengigkeit: Speicher haelt die Knopfliste,
+# darauf setzen Ziele (Kanalwahl, Platzhalter) und Ausloesen (die Aktionen) auf.
+Logik\Speicher.lua
+Logik\Ziele.lua
+Logik\Ausloesen.lua
+
+# Selbstdiagnose - beantwortet  /tcd doctor . Braucht alles darueber.
+Logik\Diagnose.lua
+
+# Oberflaeche. Knopf vor Dock: Das Dock legt Knoepfe an.
+UI\Knopf.lua
+UI\Dock.lua
+UI\Editor.lua
+UI\Minimap.lua
+
+Core.lua

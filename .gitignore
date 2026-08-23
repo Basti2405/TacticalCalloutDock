@@ -1,0 +1,13 @@
+# Baut der Packager.
+.release/
+
+# Wird von tools/test.sh angelegt: das selbst gebaute Lua 5.1.
+.werkzeuge/
+
+# Arbeitsdateien der Entwicklungsumgebung.
+.idea/
+*.iml
+
+# Dieses Addon bringt KEINE Fremdbibliotheken mit - siehe den Kopf der .toc.
+# Sollte sich das einmal aendern, gehoert hier das Gegenstueck zu StatCompass
+# und TacticalDebrief hin (Libs/* ignorieren, embeds.xml behalten).
