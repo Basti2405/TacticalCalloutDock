@@ -44,8 +44,14 @@ local ZEILEN_HOEHE    = 24
 -- ===========================================================================
 
 -- Eine Ueberschrift.
+-- Eine Ueberschrift oder Feldbeschriftung.
+--
+-- Vorgabe ist bewusst GameFontHighlightSmall (weiss) und nicht
+-- GameFontNormalSmall (gelb): Der Editor ist dunkelblau, und Gelb darauf
+-- ermuedet beim Lesen von zwei Dutzend Beschriftungen. Wer ausdruecklich eine
+-- andere Schriftart uebergibt, bekommt sie.
 local function beschriftung(eltern, text, schriftart)
-    local fs = eltern:CreateFontString(nil, "OVERLAY", schriftart or "GameFontNormalSmall")
+    local fs = eltern:CreateFontString(nil, "OVERLAY", schriftart or "GameFontHighlightSmall")
     fs:SetText(text)
     return fs
 end
@@ -79,9 +85,20 @@ local function kasten(eltern, text, beiAenderung)
 end
 
 -- Ein normaler Knopf.
+--
+-- UIPanelButtonTemplate bringt gelbe Schrift mit. Auf dem rotbraunen
+-- Knopfhintergrund sind das zwei warme Farben aehnlicher Helligkeit - im
+-- Spiel war das schlecht zu lesen. Weiss trennt sauber, ohne dass der Knopf
+-- aufhoert, wie ein Blizzard-Knopf auszusehen.
+--
+-- Ueber die Font-OBJEKTE und nicht ueber SetTextColor: Blizzard setzt die
+-- Farbe bei Hover und Klick sonst wieder auf ihren eigenen Wert zurueck.
 local function knopf(eltern, text, breite, beiKlick)
     local b = CreateFrame("Button", nil, eltern, "UIPanelButtonTemplate")
     b:SetSize(breite, 22)
+    b:SetNormalFontObject("GameFontHighlightSmall")
+    b:SetHighlightFontObject("GameFontHighlightSmall")
+    b:SetDisabledFontObject("GameFontDisableSmall")
     b:SetText(text)
     b:SetScript("OnClick", beiKlick)
     return b
@@ -147,20 +164,61 @@ end
 -- Eine eigene Auswahlliste
 -- ---------------------------------------------------------------------------
 -- Ersatz fuer UIDropDownMenu. Der Knopf zeigt den aktuellen Wert; ein Klick
--- klappt die Liste darunter auf. Bewusst schlicht: kein Untermenue, keine
--- Bilder, keine Tastatursteuerung - fuer acht Kanaele und neun Markierungen
--- braucht es das nicht.
+-- klappt die Liste darunter auf.
+--
+-- ZUR LESBARKEIT: Anfangs steckte hier UIPanelButtonTemplate - Blizzards
+-- Standardknopf. Der bringt gelben Text auf rotbraunem Grund mit, und im
+-- Spiel war das auf dem dunkelblauen Editor kaum zu entziffern: zwei warme
+-- Farben mit aehnlicher Helligkeit, dazu die kleine Schrift.
+--
+-- Jetzt ist es ein eigener Rahmen: dunkler Grund, WEISSER Text in normaler
+-- Groesse, heller Rand. Das ist derselbe Kontrast wie bei den Eingabefeldern
+-- daneben - die Auswahl sieht damit aus wie das, was sie ist, naemlich ein
+-- Feld und kein Knopf.
 --
 -- eintraege: Liste von { wert = ..., text = "..." }
+local AUSWAHL_ZEILE = 22
+
 local function auswahl(eltern, breite, eintraege, holen, setzen)
     local halter = CreateFrame("Frame", nil, eltern)
-    halter:SetSize(breite, 22)
+    halter:SetSize(breite, 24)
 
-    local anzeige = CreateFrame("Button", nil, halter, "UIPanelButtonTemplate")
+    -- Das Anzeigefeld.
+    local anzeige = CreateFrame("Button", nil, halter, "BackdropTemplate")
     anzeige:SetAllPoints()
-    anzeige:GetFontString():SetJustifyH("LEFT")
-    anzeige:GetFontString():SetPoint("LEFT", 6, 0)
+    anzeige:SetBackdrop({
+        bgFile   = "Interface\\Buttons\\WHITE8X8",
+        edgeFile = "Interface\\Buttons\\WHITE8X8",
+        edgeSize = 1,
+    })
+    anzeige:SetBackdropColor(0.10, 0.14, 0.19, 1)
+    anzeige:SetBackdropBorderColor(0.32, 0.42, 0.52, 1)
 
+    anzeige.text = anzeige:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    anzeige.text:SetPoint("LEFT", 7, 0)
+    anzeige.text:SetPoint("RIGHT", -22, 0)
+    anzeige.text:SetJustifyH("LEFT")
+    anzeige.text:SetWordWrap(false)
+    anzeige.text:SetTextColor(1, 1, 1)
+
+    -- Der Pfeil sagt, dass sich hier etwas aufklappt. Ohne ihn sieht das
+    -- Feld aus wie ein Textfeld, in das man tippen koennte.
+    local pfeil = anzeige:CreateTexture(nil, "OVERLAY")
+    pfeil:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
+    pfeil:SetSize(16, 16)
+    pfeil:SetPoint("RIGHT", -4, 0)
+    pfeil:SetVertexColor(0.75, 0.85, 0.95)
+
+    anzeige:SetScript("OnEnter", function(self)
+        self:SetBackdropColor(0.16, 0.22, 0.30, 1)
+        self:SetBackdropBorderColor(0.45, 0.65, 0.85, 1)
+    end)
+    anzeige:SetScript("OnLeave", function(self)
+        self:SetBackdropColor(0.10, 0.14, 0.19, 1)
+        self:SetBackdropBorderColor(0.32, 0.42, 0.52, 1)
+    end)
+
+    -- Die aufgeklappte Liste.
     local liste = CreateFrame("Frame", nil, halter, "BackdropTemplate")
     liste:SetPoint("TOPLEFT", anzeige, "BOTTOMLEFT", 0, -2)
     liste:SetWidth(breite)
@@ -170,8 +228,10 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
         edgeFile = "Interface\\Buttons\\WHITE8X8",
         edgeSize = 1,
     })
-    liste:SetBackdropColor(0.06, 0.08, 0.11, 0.98)
-    liste:SetBackdropBorderColor(0.35, 0.45, 0.55, 1)
+    -- Fast undurchsichtig: Eine halbdurchsichtige Liste laesst den Text
+    -- dahinter durchscheinen, und dann liest man beides nicht mehr.
+    liste:SetBackdropColor(0.06, 0.09, 0.13, 0.98)
+    liste:SetBackdropBorderColor(0.45, 0.60, 0.75, 1)
     liste:Hide()
 
     local function text_zu(wert)
@@ -181,8 +241,23 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
         return tostring(wert)
     end
 
+    local zeilen_rahmen = {}
+
     local function anzeigen()
-        anzeige:SetText(text_zu(holen()))
+        local jetzt = holen()
+        anzeige.text:SetText(text_zu(jetzt))
+
+        -- Der aktive Eintrag wird in der Liste hervorgehoben. Ohne das muss
+        -- man beim Aufklappen erst suchen, was gerade eingestellt ist.
+        for _, z in ipairs(zeilen_rahmen) do
+            if z.wert == jetzt then
+                z.grund:SetColorTexture(0.20, 0.50, 0.75, 0.55)
+                z.text:SetTextColor(1, 1, 1)
+            else
+                z.grund:SetColorTexture(0, 0, 0, 0)
+                z.text:SetTextColor(0.88, 0.90, 0.93)
+            end
+        end
     end
 
     local function zuklappen()
@@ -191,15 +266,22 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
 
     for i, e in ipairs(eintraege) do
         local zeile = CreateFrame("Button", nil, liste)
-        zeile:SetSize(breite - 2, 18)
-        zeile:SetPoint("TOPLEFT", 1, -((i - 1) * 18) - 1)
+        zeile:SetSize(breite - 2, AUSWAHL_ZEILE)
+        zeile:SetPoint("TOPLEFT", 1, -((i - 1) * AUSWAHL_ZEILE) - 1)
+        zeile.wert = e.wert
+
+        zeile.grund = zeile:CreateTexture(nil, "BACKGROUND")
+        zeile.grund:SetAllPoints()
 
         zeile.hell = zeile:CreateTexture(nil, "HIGHLIGHT")
         zeile.hell:SetAllPoints()
-        zeile.hell:SetColorTexture(0.2, 0.5, 0.8, 0.4)
+        zeile.hell:SetColorTexture(1, 1, 1, 0.16)
 
-        zeile.text = zeile:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        zeile.text:SetPoint("LEFT", 5, 0)
+        zeile.text = zeile:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+        zeile.text:SetPoint("LEFT", 7, 0)
+        zeile.text:SetPoint("RIGHT", -5, 0)
+        zeile.text:SetJustifyH("LEFT")
+        zeile.text:SetWordWrap(false)
         zeile.text:SetText(e.text)
 
         zeile:SetScript("OnClick", function()
@@ -207,12 +289,36 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
             anzeigen()
             zuklappen()
         end)
+
+        zeilen_rahmen[i] = zeile
     end
 
-    liste:SetHeight(#eintraege * 18 + 2)
+    liste:SetHeight(#eintraege * AUSWAHL_ZEILE + 2)
 
-    anzeige:SetScript("OnClick", function()
-        if liste:IsShown() then zuklappen() else liste:Show() end
+    -- ---------------------------------------------------------------------
+    -- Aufklappen - nach unten, wenn Platz ist, sonst nach oben
+    -- ---------------------------------------------------------------------
+    -- Die Markierungsliste hat neun Eintraege. Weiter unten im Formular
+    -- reicht der Platz darunter nicht mehr, und die Liste haengt halb unter
+    -- dem Bildschirmrand - man waehlt dann blind. Deshalb wird bei jedem
+    -- Aufklappen neu entschieden, in welche Richtung sie sich oeffnet.
+    --
+    -- Die Entscheidung faellt erst beim Klick und nicht beim Bauen: Das
+    -- Fenster laesst sich verschieben, und was am unteren Bildschirmrand
+    -- keinen Platz hat, hat ihn in der Bildschirmmitte sehr wohl.
+    anzeige:SetScript("OnClick", function(self)
+        if liste:IsShown() then zuklappen() return end
+
+        liste:ClearAllPoints()
+
+        local unten = self:GetBottom()
+        if unten and (unten - liste:GetHeight() - 2) < 0 then
+            liste:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 2)
+        else
+            liste:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -2)
+        end
+
+        liste:Show()
     end)
 
     halter.Auffrischen = anzeigen
@@ -377,12 +483,18 @@ local function reiterZeigen(welcher)
     fenster.bereichKnoepfe:SetShown(welcher == "BUTTONS")
     fenster.bereichLayout:SetShown(welcher == "LAYOUT")
 
-    fenster.reiterKnoepfe.grund:SetColorTexture(
-        welcher == "BUTTONS" and 0.20 or 0, welcher == "BUTTONS" and 0.60 or 0,
-        welcher == "BUTTONS" and 0.85 or 0, welcher == "BUTTONS" and 0.8 or 0.35)
-    fenster.reiterLayout.grund:SetColorTexture(
-        welcher == "LAYOUT" and 0.20 or 0, welcher == "LAYOUT" and 0.60 or 0,
-        welcher == "LAYOUT" and 0.85 or 0, welcher == "LAYOUT" and 0.8 or 0.35)
+    local function reiterFaerben(reiter, aktiv)
+        if aktiv then
+            reiter.grund:SetColorTexture(0.20, 0.60, 0.85, 0.85)
+            reiter.text:SetTextColor(1, 1, 1)
+        else
+            reiter.grund:SetColorTexture(0, 0, 0, 0.40)
+            reiter.text:SetTextColor(0.70, 0.75, 0.80)
+        end
+    end
+
+    reiterFaerben(fenster.reiterKnoepfe, welcher == "BUTTONS")
+    reiterFaerben(fenster.reiterLayout, welcher == "LAYOUT")
 
     E:Auffrischen()
 end
@@ -458,6 +570,7 @@ local function fensterBauen()
         r.text = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
         r.text:SetPoint("CENTER")
         r.text:SetText(text)
+        r.text:SetTextColor(1, 1, 1)
 
         r:SetScript("OnClick", function() reiterZeigen(welcher) end)
         return r
