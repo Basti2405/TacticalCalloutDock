@@ -266,10 +266,12 @@ neuesten Abschnitt.
 es ist Blizzard-Material.
 
 **Screenshots** — für WoW-Addons nicht zwingend, aber der wichtigste Grund,
-warum jemand auf „Installieren" klickt. Drei liegen fertig unter
-`docs/bilder/` und sind auf der Projektseite eingebunden:
-`leiste.png` (die Leiste im Tank-Profil), `tooltip.png` (Tooltip mit
-Nachricht, Zielkanal und Markierung) und `editor.jpg` (der Editor).
+warum jemand auf „Installieren" klickt. Vier liegen fertig unter
+`docs/bilder/` und sind auf der Projektseite eingebunden, in dieser
+Reihenfolge: `leiste.png` (die Leiste im Tank-Profil — *was ist das?*),
+`leiste-heiler.png` (dieselbe Leiste im Heiler-Profil — *die Rollen sind
+wirklich verschieden*), `tooltip.png` (Nachricht, Zielkanal und Markierung —
+*was tut ein Klick?*) und `editor.jpg` (der Editor — *wie ändere ich es?*).
 
 Für CurseForge sind sie **klein** (477 bis 860 Pixel breit, weil aus dem
 laufenden Spiel zugeschnitten). Für die Projektseite reicht das; wer sie dort
