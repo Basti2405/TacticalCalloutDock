@@ -174,8 +174,6 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
     liste:SetBackdropBorderColor(0.35, 0.45, 0.55, 1)
     liste:Hide()
 
-    local eintragRahmen = {}
-
     local function text_zu(wert)
         for _, e in ipairs(eintraege) do
             if e.wert == wert then return e.text end
@@ -209,8 +207,6 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
             anzeigen()
             zuklappen()
         end)
-
-        eintragRahmen[i] = zeile
     end
 
     liste:SetHeight(#eintraege * 18 + 2)
@@ -274,15 +270,15 @@ end
 
 -- Eine Aenderung am aktuellen Knopf uebernehmen und ueberall sichtbar machen.
 local function aendern(feld, wert)
-    local knopf = aktuell()
-    if not knopf then return end
+    local eintrag = aktuell()
+    if not eintrag then return end
 
-    knopf[feld] = wert
+    eintrag[feld] = wert
 
     -- Ueber KnopfSetzen, damit die Pruefungen aus Logik\Speicher.lua greifen -
     -- sonst koennte man hier eine 300 Zeichen lange Nachricht eintragen, die
     -- der Server spaeter stumm abschneidet.
-    S.KnopfSetzen(gewaehlt, knopf)
+    S.KnopfSetzen(gewaehlt, eintrag)
 
     TCD.Dock.Aufbauen()
     E:Auffrischen()
@@ -304,12 +300,12 @@ local function listeAuffrischen()
     for i = 1, ZEILEN_SICHTBAR do
         local zeile = zeilen[i]
         local index = i + versatz
-        local knopf = liste[index]
+        local eintrag = liste[index]
 
-        if knopf then
+        if eintrag then
             zeile.index = index
-            zeile.symbol:SetTexture(knopf.symbol)
-            zeile.text:SetText(format("%d. %s", index, knopf.beschriftung ~= "" and knopf.beschriftung or "-"))
+            zeile.symbol:SetTexture(eintrag.symbol)
+            zeile.text:SetText(format("%d. %s", index, eintrag.beschriftung ~= "" and eintrag.beschriftung or "-"))
 
             if index == gewaehlt then
                 zeile.grund:SetColorTexture(0.20, 0.60, 0.85, 0.55)
@@ -330,9 +326,9 @@ end
 -- Das Formular (rechts)
 -- ===========================================================================
 local function formularAuffrischen()
-    local knopf = aktuell()
+    local eintrag = aktuell()
 
-    if not knopf then
+    if not eintrag then
         for _, feld in pairs(felder) do
             if feld.SetText then feld:SetText("") end
             if feld.Auffrischen then feld.Auffrischen() end
@@ -344,13 +340,13 @@ local function formularAuffrischen()
 
     for _, feld in pairs(felder) do feld:Show() end
 
-    felder.beschriftung:SetText(knopf.beschriftung or "")
+    felder.beschriftung:SetText(eintrag.beschriftung or "")
     felder.beschriftung:SetCursorPosition(0)
 
-    felder.text:SetText(knopf.text or "")
+    felder.text:SetText(eintrag.text or "")
     felder.text:SetCursorPosition(0)
 
-    felder.symbol:SetText(tostring(knopf.symbol or ""))
+    felder.symbol:SetText(tostring(eintrag.symbol or ""))
     felder.symbol:SetCursorPosition(0)
 
     felder.kanal.Auffrischen()
@@ -359,8 +355,8 @@ local function formularAuffrischen()
 
     -- Die Vorschau zeigt die Zeile mit eingesetzten Platzhaltern - also das,
     -- was die Gruppe gleich lesen wuerde.
-    if knopf.text and knopf.text ~= "" then
-        fenster.vorschau:SetText(TCD.Ziele.PlatzhalterFuellen(knopf.text))
+    if eintrag.text and eintrag.text ~= "" then
+        fenster.vorschau:SetText(TCD.Ziele.PlatzhalterFuellen(eintrag.text))
     else
         fenster.vorschau:SetText("")
     end
@@ -683,7 +679,6 @@ local function fensterBauen()
     Y:Hide()
     fenster.bereichLayout = Y
 
-    local d = S.Dock()
     local zy = -8
 
     local function setzeZahlenfeld(feld)

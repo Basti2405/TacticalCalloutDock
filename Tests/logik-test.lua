@@ -364,6 +364,7 @@ do
 
     kanal, ersetzt = KB("PARTY")
     gleich(kanal, "SAY", "PARTY allein faellt auf SAY zurueck")
+    gleich(ersetzt, true, "auch hier wird das Ersetzen gemeldet")
 
     welt.gruppe = "PARTY"
     gleich(KB("RAID"), "PARTY", "RAID in einer Gruppe wird zu PARTY")

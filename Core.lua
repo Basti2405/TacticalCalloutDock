@@ -21,7 +21,6 @@
 local addonName, TCD = ...
 
 local L = TCD.L
-local A = TCD.API
 
 -- Global erreichbar machen, damit man im Spiel z. B. "/dump TacticalCalloutDock"
 -- testen kann.
