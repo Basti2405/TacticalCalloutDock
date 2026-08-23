@@ -39,8 +39,8 @@ Leere zu laufen.
 Gibt es das Ziel nicht, steht dort *„kein Ziel"* statt einer Lücke.
 
 **Editor im Spiel.** Knöpfe anlegen, bearbeiten, umsortieren, löschen – ohne
-eine einzige `.lua` anzufassen. Mit Vorschau der fertigen Zeile: Wer `%t`
-tippt, sieht direkt darunter, welcher Name gleich im Chat steht.
+eine einzige `.lua` anzufassen. Beschriftung, Nachricht, Kanal, Symbol,
+Zielmarkierung und Ping stehen als Felder nebeneinander.
 
 ## Es arbeitet auch im Kampf
 

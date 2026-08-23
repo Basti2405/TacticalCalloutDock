@@ -77,10 +77,10 @@ first"*. Switch with the tabs on the dock or `/tcd tank`.
 
 ### Edit everything in game
 
-Add, edit, reorder and delete buttons without touching a single Lua file, with
-a live preview of the finished line: type `%t` and the name that will appear in
-chat is shown right below. Direction, button size, spacing, background opacity,
-scale and wrapping are all adjustable.
+Add, edit, reorder and delete buttons without touching a single Lua file.
+Label, message, channel, icon, raid marker and ping sit side by side as fields.
+Direction, button size, spacing, background opacity, scale and wrapping are all
+adjustable.
 
 ### It works during combat
 
@@ -185,8 +185,8 @@ Schlüsselstein-Alltag. Umschaltbar über Reiter an der Leiste oder `/tcd tank`.
 ### Editor im Spiel
 
 Knöpfe anlegen, bearbeiten, umsortieren, löschen — ohne eine einzige Lua-Datei
-anzufassen. Mit Vorschau: Wer `%t` tippt, sieht direkt darunter, welcher Name
-gleich im Chat steht.
+anzufassen. Beschriftung, Nachricht, Kanal, Symbol, Zielmarkierung und Ping
+stehen als Felder nebeneinander.
 
 ### Es arbeitet auch im Kampf
 
@@ -232,8 +232,7 @@ A movable dock of one-click tactical callouts for Mythic+ and raids.
 * Placeholders `%t` target, `%f` focus, `%m` mouseover, `%p` yourself, with a
   readable substitute when the unit does not exist.
 * Three role profiles (tank, healer, damage) with eight prepared callouts each.
-* An in-game editor: add, edit, reorder and delete buttons with a live preview
-  of the finished line. No Lua editing.
+* An in-game editor: add, edit, reorder and delete buttons. No Lua editing.
 * Horizontal or vertical layout with adjustable button size, spacing,
   background opacity, scale and wrapping. Position is saved.
 * `/tcd doctor` — a self-check covering every game function the addon needs,
@@ -267,14 +266,21 @@ neuesten Abschnitt.
 es ist Blizzard-Material.
 
 **Screenshots** — für WoW-Addons nicht zwingend, aber der wichtigste Grund,
-warum jemand auf „Installieren" klickt. Diese vier zeigen genau das, was die
-Beschreibung behauptet:
+warum jemand auf „Installieren" klickt. Drei liegen fertig unter
+`docs/bilder/` und sind auf der Projektseite eingebunden:
+`leiste.png` (die Leiste im Tank-Profil), `tooltip.png` (Tooltip mit
+Nachricht, Zielkanal und Markierung) und `editor.jpg` (der Editor).
+
+Für CurseForge sind sie **klein** (477 bis 860 Pixel breit, weil aus dem
+laufenden Spiel zugeschnitten). Für die Projektseite reicht das; wer sie dort
+hochlädt, sollte sie in voller Bildschirmauflösung neu aufnehmen.
+
+Diese vier zeigen genau das, was die Beschreibung behauptet:
 
 1. **Die Leiste in einem Schlüsselstein**, waagerecht über den Aktionsleisten,
    mit dem Schaden-Profil. Das ist das Bild, das erklärt, worum es geht.
-2. **Der Editor**, geöffnet auf einem Knopf mit `%t` im Nachrichtenfeld, so
-   dass die Vorschau darunter den eingesetzten Zielnamen zeigt. Beweist die
-   Behauptung „ohne Lua-Datei bearbeiten".
+2. **Der Editor**, geöffnet auf einem Knopf. Beweist die Behauptung „ohne
+   Lua-Datei bearbeiten". Liegt als `docs/bilder/editor.jpg` vor.
 3. **Der Chat direkt nach einem Klick**, mit der Ansage im Instanzchat und dem
    Totenschädel auf dem Ziel im selben Bild. Zeigt die drei Aktionen auf
    einmal.

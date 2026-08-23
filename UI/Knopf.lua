@@ -120,9 +120,24 @@ function K.Holen(eltern, index)
     rahmen.symbol:SetPoint("TOPLEFT", 2, -2)
     rahmen.symbol:SetPoint("BOTTOMRIGHT", -2, 2)
 
-    -- Die Ecken der Blizzard-Symbole abschneiden. Ohne das wirkt jedes Icon
-    -- wie aufgeklebt; mit dem Zuschnitt sitzt es im Knopf.
-    rahmen.symbol:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    -- -----------------------------------------------------------------
+    -- Schaerfe
+    -- -----------------------------------------------------------------
+    -- WoW rundet Texturkanten normalerweise auf ganze Bildschirmpixel. Bei
+    -- einer Knopfgroesse, die nicht zufaellig aufgeht - und das ist bei frei
+    -- einstellbarer Groesse und Skalierung der Normalfall - verschiebt diese
+    -- Rundung die Kanten um Bruchteile eines Pixels. Das Ergebnis ist ein
+    -- weichgezeichnetes Symbol.
+    --
+    -- Diese beiden Zeilen schalten die Rundung ab. Blizzards Symbole sind
+    -- 64x64 Bildpunkte gross; mehr Aufloesung gibt es nicht, auch nicht ueber
+    -- einen Atlas. Was man beeinflussen kann, ist allein, wie sauber diese
+    -- 64 Punkte auf den Bildschirm kommen - und da liegt der sichtbare
+    -- Unterschied. Dasselbe macht BigWigs fuer seine Leisten.
+    if rahmen.symbol.SetSnapToPixelGrid then
+        rahmen.symbol:SetSnapToPixelGrid(false)
+        rahmen.symbol:SetTexelSnappingBias(0)
+    end
 
     rahmen.rand = rahmen:CreateTexture(nil, "BACKGROUND")
     rahmen.rand:SetAllPoints()
@@ -143,6 +158,11 @@ function K.Holen(eltern, index)
     rahmen.text:SetJustifyH("CENTER")
     rahmen.text:SetWordWrap(false)
 
+    -- Weiss statt des gelben Vorgabetons von GameFontNormalSmall: Die
+    -- Beschriftung liegt auf einem farbigen Symbol, und Gelb auf Orange ist
+    -- im Kampf nicht zu lesen.
+    rahmen.text:SetTextColor(1, 1, 1)
+
     -- Ein schmaler dunkler Streifen hinter der Beschriftung. Ohne ihn ist
     -- weisser Text auf einem hellen Symbol nicht zu lesen.
     rahmen.textGrund = rahmen:CreateTexture(nil, "BORDER")
@@ -159,6 +179,49 @@ function K.Holen(eltern, index)
 end
 
 -- ---------------------------------------------------------------------------
+-- Braucht dieses Symbol den Randbeschnitt?
+-- ---------------------------------------------------------------------------
+-- Faehigkeitssymbole unter  Interface\Icons\  haben einen dunklen Rahmen
+-- eingebrannt. Den schneidet man weg, sonst wirkt das Bild aufgeklebt.
+--
+-- Zielmarkierungen haben diesen Rand NICHT. Wer sie trotzdem beschneidet,
+-- benutzt von 64 Bildpunkten nur 54 und zieht die wieder auf. Genau das laesst
+-- den Totenschaedel grob aussehen - und es faellt kaum auf, weil man den
+-- Zuschnitt einmal fuer alle Symbole setzt und nie wieder hinsieht.
+--
+-- Datei-IDs (Zahlen) gelten als Faehigkeitssymbol: Was Spieler in den Editor
+-- eintragen, stammt praktisch immer von wowhead und ist eins.
+function K.BrauchtZuschnitt(symbol)
+    if type(symbol) == "number" then return true end
+    if type(symbol) ~= "string" then return false end
+    return symbol:lower():find("interface\\icons\\", 1, true) ~= nil
+end
+
+-- ---------------------------------------------------------------------------
+-- Die Beschriftung so gross wie moeglich, aber nie breiter als der Knopf
+-- ---------------------------------------------------------------------------
+-- Ohne das schneidet WoW zu lang geratene Beschriftungen mit "..." ab - im
+-- Spiel stand dort "Trin..." statt "Trinken" und "Sch.." statt "Schaedel".
+-- Deutsche Woerter sind laenger als englische, und die Knopfgroesse ist frei
+-- einstellbar; eine feste Schriftgroesse kann das nicht auffangen.
+--
+-- Also von oben herunter probieren, bis es passt. Unter 7 Punkt wird nicht
+-- weiter verkleinert - was dann noch nicht passt, darf abgeschnitten werden,
+-- denn lesbar waere es ohnehin nicht mehr.
+local function beschriftungEinpassen(fs, text, breite)
+    local pfad, _, flaggen = fs:GetFont()
+    fs:SetText(text)
+
+    local groesse = 10
+    fs:SetFont(pfad, groesse, flaggen)
+
+    while groesse > 7 and fs:GetStringWidth() > breite do
+        groesse = groesse - 1
+        fs:SetFont(pfad, groesse, flaggen)
+    end
+end
+
+-- ---------------------------------------------------------------------------
 -- Einen Rahmen mit Daten bestuecken
 -- ---------------------------------------------------------------------------
 function K.Bestuecken(rahmen, knopf, index, groesse, beschriftungen)
@@ -166,7 +229,15 @@ function K.Bestuecken(rahmen, knopf, index, groesse, beschriftungen)
     rahmen.index = index
 
     rahmen:SetSize(groesse, groesse)
-    rahmen.symbol:SetTexture(knopf.symbol or "Interface\\Icons\\INV_Misc_QuestionMark")
+
+    local symbol = knopf.symbol or "Interface\\Icons\\INV_Misc_QuestionMark"
+    rahmen.symbol:SetTexture(symbol)
+
+    if K.BrauchtZuschnitt(symbol) then
+        rahmen.symbol:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    else
+        rahmen.symbol:SetTexCoord(0, 1, 0, 1)
+    end
 
     -- Unter etwa 28 Pixeln ist eine Beschriftung nicht mehr lesbar, sie
     -- verdeckt dann nur das Symbol. Also wird sie dort ausgeblendet, auch
@@ -174,7 +245,8 @@ function K.Bestuecken(rahmen, knopf, index, groesse, beschriftungen)
     local zeigen = beschriftungen and groesse >= 28 and knopf.beschriftung ~= ""
 
     if zeigen then
-        rahmen.text:SetText(knopf.beschriftung)
+        -- Zwei Bildpunkte Luft, damit die Kontur nicht am Rand klebt.
+        beschriftungEinpassen(rahmen.text, knopf.beschriftung, groesse - 4)
         rahmen.text:Show()
         rahmen.textGrund:Show()
     else

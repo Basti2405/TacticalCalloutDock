@@ -334,7 +334,6 @@ local function formularAuffrischen()
             if feld.Auffrischen then feld.Auffrischen() end
             feld:Hide()
         end
-        fenster.vorschau:SetText("")
         return
     end
 
@@ -352,14 +351,6 @@ local function formularAuffrischen()
     felder.kanal.Auffrischen()
     felder.marke.Auffrischen()
     felder.ping.Auffrischen()
-
-    -- Die Vorschau zeigt die Zeile mit eingesetzten Platzhaltern - also das,
-    -- was die Gruppe gleich lesen wuerde.
-    if eintrag.text and eintrag.text ~= "" then
-        fenster.vorschau:SetText(TCD.Ziele.PlatzhalterFuellen(eintrag.text))
-    else
-        fenster.vorschau:SetText("")
-    end
 end
 
 -- ===========================================================================
@@ -549,7 +540,7 @@ local function fensterBauen()
     end)
     hinzu:SetPoint("TOPLEFT", listenRahmen, "BOTTOMLEFT", 0, -6)
 
-    local weg = knopf(B, L.CFG_DELETE, 66, function()
+    local weg = knopf(B, L.CFG_DELETE, 76, function()
         if S.KnopfLoeschen(gewaehlt) then
             TCD.Dock.Aufbauen()
             E:Auffrischen()
@@ -557,7 +548,16 @@ local function fensterBauen()
     end)
     weg:SetPoint("LEFT", hinzu, "RIGHT", 4, 0)
 
-    local hoch = knopf(B, L.CFG_UP, 40, function()
+    -- ---------------------------------------------------------------------
+    -- Zweite Reihe: Hoch und Runter
+    -- ---------------------------------------------------------------------
+    -- Erst standen alle vier nebeneinander. Im Spiel war "Runter" halb
+    -- abgeschnitten, und breiter durfte die Reihe nicht werden: Sie muss
+    -- unter die 232 Pixel breite Liste passen, sonst ragt sie in das Formular
+    -- rechts daneben. Deutsche Beschriftungen sind laenger als englische -
+    -- eine Reihe, die auf Englisch gerade noch passt, passt auf Deutsch nicht
+    -- mehr. Zwei Reihen loesen das, ohne von der Sprache abzuhaengen.
+    local hoch = knopf(B, L.CFG_UP, 76, function()
         local neu = S.KnopfVerschieben(gewaehlt, -1)
         if neu then
             gewaehlt = neu
@@ -565,9 +565,9 @@ local function fensterBauen()
             E:Auffrischen()
         end
     end)
-    hoch:SetPoint("LEFT", weg, "RIGHT", 4, 0)
+    hoch:SetPoint("TOPLEFT", hinzu, "BOTTOMLEFT", 0, -4)
 
-    local runter = knopf(B, L.CFG_DOWN, 40, function()
+    local runter = knopf(B, L.CFG_DOWN, 76, function()
         local neu = S.KnopfVerschieben(gewaehlt, 1)
         if neu then
             gewaehlt = neu
@@ -626,17 +626,6 @@ local function fensterBauen()
     felder.text:SetScript("OnEditFocusLost", function(self)
         aendern("text", self:GetText())
     end)
-
-    -- Die Vorschau steht direkt unter dem Textfeld: Wer "%t" tippt, sieht
-    -- eine Zeile tiefer, welcher Name dort landet.
-    local vorschauTitel = beschriftung(B, L.CFG_PREVIEW, "GameFontDisableSmall")
-    vorschauTitel:SetPoint("TOPLEFT", X, y + 4)
-    fenster.vorschau = beschriftung(B, "", "GameFontHighlightSmall")
-    fenster.vorschau:SetPoint("TOPLEFT", X + 56, y + 4)
-    fenster.vorschau:SetWidth(274)
-    fenster.vorschau:SetJustifyH("LEFT")
-    fenster.vorschau:SetTextColor(0.4, 0.8, 1)
-    y = y - 22
 
     local yKanal = reihe(L.CFG_CHANNEL, L.CH_AUTO_DESC)
     felder.kanal = auswahl(B, 180, kanalEintraege(),

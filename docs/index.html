@@ -176,6 +176,22 @@ code { font: 500 .88rem var(--mono); background: rgba(255,255,255,.05); padding:
 
 .hinweis { color: var(--ink-leise); font-size: .9rem; }
 
+/* ---------- Bilder aus dem Spiel ----------
+   Der dunkle Rahmen ist Absicht: WoW-Screenshots haben keinen eigenen Rand,
+   und ohne ihn schwimmt das Bild auf der dunklen Seite. */
+.bilder { display: grid; gap: 2rem; }
+.bild figure { margin: 0; }
+.bild img {
+  display: block; max-width: 100%; height: auto;
+  border: 1px solid var(--linie); border-radius: 6px;
+  background: #000;
+}
+.bild figcaption {
+  margin-top: .6rem; font-size: .9rem; color: var(--ink-leise);
+  max-width: 68ch;
+}
+.bild figcaption b { color: var(--ink); font-weight: 600; }
+
 footer {
   display: flex; gap: 1.5rem; flex-wrap: wrap;
   padding: 2rem 0 3rem; border-top: 1px solid var(--linie);
@@ -193,6 +209,7 @@ footer a { color: var(--ink-leise); }
     <span class="wortmarke">Tactical<b>Dock</b></span>
     <nav class="kopf-links">
       <a href="#was"><span lang="de">Was es tut</span><span lang="en">What it does</span></a>
+      <a href="#bilder"><span lang="de">Im Spiel</span><span lang="en">In game</span></a>
       <a href="#kanal"><span lang="de">Kanalwahl</span><span lang="en">Channels</span></a>
       <a href="#installieren"><span lang="de">Installieren</span><span lang="en">Install</span></a>
       <a href="https://github.com/Basti2405/TacticalCalloutDock">GitHub</a>
@@ -293,11 +310,11 @@ footer a { color: var(--ink-leise); }
       <div class="karte">
         <h3><span lang="de">Editor im Spiel</span><span lang="en">In-game editor</span></h3>
         <p><span lang="de">Knöpfe anlegen, bearbeiten, umsortieren, löschen – ohne eine einzige
-          <code>.lua</code> anzufassen. Mit Vorschau: Wer <code>%t</code> tippt, sieht direkt
-          darunter, welcher Name gleich im Chat steht.</span>
+          <code>.lua</code> anzufassen. Beschriftung, Nachricht, Kanal, Symbol, Zielmarkierung
+          und Ping stehen als Felder nebeneinander.</span>
           <span lang="en">Add, edit, reorder and delete buttons without touching a single
-          <code>.lua</code> file. With a preview: type <code>%t</code> and the name that will
-          appear in chat is shown right below.</span></p>
+          <code>.lua</code> file. Label, message, channel, icon, raid marker and ping sit side
+          by side as fields.</span></p>
       </div>
 
       <div class="karte">
@@ -309,6 +326,65 @@ footer a { color: var(--ink-leise); }
           profiles, size, direction and even dragging all work mid-pull. Not one line defers
           work “until after combat”.</span></p>
       </div>
+    </div>
+  </section>
+
+  <!-- ==================================================================== -->
+  <!-- Bilder aus dem laufenden Spiel. Sie stehen NACH "Was es tut": erst die
+       Behauptung, dann der Beleg. -->
+  <section id="bilder">
+    <h2><span lang="de">Im Spiel</span><span lang="en">In game</span></h2>
+
+    <div class="bilder">
+
+      <div class="bild">
+        <figure>
+          <img src="bilder/leiste.png" width="477" height="188" loading="lazy"
+               alt="Die Leiste im Tank-Profil mit acht Kn&ouml;pfen und den Reitern Tank, Heiler und Schaden.">
+          <figcaption>
+            <span lang="de"><b>Die Leiste.</b> Acht Ansagen, dar&uuml;ber die Reiter f&uuml;r die
+              drei Rollen. Sie l&auml;sst sich frei verschieben, drehen und in der Gr&ouml;&szlig;e
+              &auml;ndern &ndash; auch mitten im Kampf.</span>
+            <span lang="en"><b>The dock.</b> Eight callouts, with the tabs for the three roles
+              above them. It can be moved, rotated and resized freely &ndash; even mid-combat.</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="bild">
+        <figure>
+          <img src="bilder/tooltip.png" width="546" height="287" loading="lazy"
+               alt="Tooltip &uuml;ber einem Knopf: Nachrichtentext, Zielkanal Schlachtzug und die Zielmarkierung Totensch&auml;del.">
+          <figcaption>
+            <span lang="de"><b>Was ein Klick tut &ndash; vorher.</b> Der Tooltip zeigt die Zeile mit
+              eingesetzten Platzhaltern, den Kanal, in dem sie landet, und die Markierung, die
+              gesetzt wird. Hier steht &bdquo;kein Ziel&ldquo;, weil gerade keins ausgew&auml;hlt
+              ist &ndash; und &bdquo;Geht an: Schlachtzug&ldquo;, weil die Automatik den
+              Schlachtzug erkannt hat.</span>
+            <span lang="en"><b>What a click does &ndash; before you click.</b> The tooltip shows
+              the line with placeholders filled in, the channel it will go to, and the marker it
+              will place. It reads &ldquo;no target&rdquo; because none is selected, and
+              &ldquo;Goes to: Raid&rdquo; because the automatic choice found a raid.</span>
+          </figcaption>
+        </figure>
+      </div>
+
+      <div class="bild">
+        <figure>
+          <img src="bilder/editor.jpg" width="860" height="700" loading="lazy"
+               alt="Der Editor: links die Liste der Kn&ouml;pfe, rechts Beschriftung, Chatnachricht, Kanal, Symbol, Zielmarkierung und Ping.">
+          <figcaption>
+            <span lang="de"><b>Der Editor.</b> Links die Kn&ouml;pfe des Profils, rechts alles,
+              was einer davon tut: Beschriftung, Nachricht, Kanal, Symbol, Zielmarkierung und
+              Ping. Anlegen, &auml;ndern, umsortieren und l&ouml;schen &ndash; ohne eine einzige
+              Datei anzufassen.</span>
+            <span lang="en"><b>The editor.</b> The profile's buttons on the left, everything one
+              of them does on the right: label, message, channel, icon, raid marker and ping.
+              Add, edit, reorder and delete &ndash; without touching a single file.</span>
+          </figcaption>
+        </figure>
+      </div>
+
     </div>
   </section>
 

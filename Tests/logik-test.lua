@@ -580,7 +580,41 @@ do
 end
 
 -- ===========================================================================
--- 8. Selbstdiagnose
+-- 8. Randbeschnitt der Symbole
+-- ===========================================================================
+abschnitt("Symbole")
+
+do
+    local Z = TCD.Knopf.BrauchtZuschnitt
+
+    -- Faehigkeitssymbole haben einen eingebrannten Rahmen, der weg soll.
+    melde(Z("Interface\\Icons\\Ability_Kick"), "Faehigkeitssymbol wird beschnitten")
+    melde(Z("interface\\icons\\ability_kick"), "auch in Kleinschreibung erkannt")
+    melde(Z(134400), "eine Datei-ID gilt als Faehigkeitssymbol")
+
+    -- Zielmarkierungen haben keinen Rand. Wer sie beschneidet, benutzt von
+    -- 64 Bildpunkten nur 54 und zieht die wieder auf - genau das liess den
+    -- Totenschaedel im Spiel grob aussehen.
+    melde(not Z("Interface\\TargetingFrame\\UI-RaidTargetingIcon_8"),
+        "Zielmarkierung wird NICHT beschnitten")
+    melde(not Z(nil), "kein Symbol, kein Zuschnitt")
+    melde(not Z(false), "unsinniger Wert, kein Zuschnitt")
+
+    -- Die Vorgaben muessen zu dieser Regel passen: Jeder Markierungsknopf
+    -- traegt die Markierungstextur, jeder andere ein Faehigkeitssymbol.
+    local passt = true
+    for _, rolle in ipairs(TCD.Vorgaben.ROLLEN) do
+        for _, k in ipairs(TCD.Vorgaben.Erzeugen(rolle)) do
+            local istMarke = tostring(k.symbol):find("RaidTargetingIcon", 1, true) ~= nil
+            if istMarke and k.marke == 0 then passt = false end
+            if istMarke == Z(k.symbol) then passt = false end
+        end
+    end
+    melde(passt, "in den Vorgaben passen Symbol, Markierung und Zuschnitt zusammen")
+end
+
+-- ===========================================================================
+-- 9. Selbstdiagnose
 -- ===========================================================================
 abschnitt("Selbstdiagnose")
 

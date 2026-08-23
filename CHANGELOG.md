@@ -19,7 +19,7 @@ Erste Fassung.
 - **Platzhalter** `%t` (Ziel), `%f` (Fokus), `%m` (Mauszeigerziel) und `%p`
   (man selbst), mit lesbarem Ersatztext, wenn es das Ziel nicht gibt.
 - **Editor im Spiel.** Knöpfe anlegen, bearbeiten, umsortieren und löschen,
-  ohne eine `.lua` anzufassen – mit Vorschau der fertigen Zeile.
+  ohne eine `.lua` anzufassen.
 - **Wiederholsperre** von 1,5 Sekunden je Knopf, einstellbar, gegen die
   Chatdrosselung des Servers.
 - Knopf an der Minikarte, `/tcd doctor` als Selbstdiagnose.

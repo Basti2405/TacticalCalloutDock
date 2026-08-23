@@ -156,7 +156,6 @@ L.CFG_MARKER_TIP   = "Placed on your current target. Needs lead or assist inside
 L.CFG_PING         = "Ping"
 L.CFG_PING_TIP     = "Uses the in-game ping wheel. Only fires on a real mouse click, never on its own."
 L.CFG_PLACEHOLDERS = "Placeholders: %t target, %f focus, %m mouseover, %p yourself"
-L.CFG_PREVIEW      = "Preview:"
 
 L.CFG_LAYOUT_DIR   = "Direction"
 L.CFG_HORIZONTAL   = "Horizontal"

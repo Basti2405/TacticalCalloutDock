@@ -39,8 +39,8 @@ the unit does not exist, the line reads *"no target"* rather than trailing
 off.
 
 **In-game editor.** Add, edit, reorder and delete buttons without touching a
-single `.lua` file, with a live preview of the finished line: type `%t` and
-the name that will appear in chat is shown right below.
+single `.lua` file. Label, message, channel, icon, raid marker and ping sit
+side by side as fields.
 
 ## It works during combat
 

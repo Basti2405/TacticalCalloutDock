@@ -118,7 +118,6 @@ L.CFG_MARKER_TIP   = "Wird auf dein aktuelles Ziel gesetzt. In der Gruppe brauch
 L.CFG_PING         = "Ping"
 L.CFG_PING_TIP     = "Benutzt das Ping-Rad des Spiels. Löst nur bei einem echten Mausklick aus, nie von selbst."
 L.CFG_PLACEHOLDERS = "Platzhalter: %t Ziel, %f Fokus, %m Mauszeigerziel, %p du selbst"
-L.CFG_PREVIEW      = "Vorschau:"
 
 L.CFG_LAYOUT_DIR   = "Ausrichtung"
 L.CFG_HORIZONTAL   = "Waagerecht"
@@ -208,7 +207,7 @@ L.SAY_T_EXTERNAL  = "Bin tief – externen Cooldown bitte"
 -- Heiler --------------------------------------------------------------------
 L.LBL_H_MANA      = "Mana"
 L.SAY_H_MANA      = "Brauche Mana – kurze Pause bitte"
-L.LBL_H_DRINK     = "Trinken"
+L.LBL_H_DRINK     = "Trink"
 L.SAY_H_DRINK     = "Ich trinke, einen Moment"
 L.LBL_H_DEFS      = "Defs"
 L.SAY_H_DEFS      = "Defensives jetzt – gleich kommt viel Schaden"
