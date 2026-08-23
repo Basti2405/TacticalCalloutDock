@@ -1,0 +1,85 @@
+name: Tests
+
+# Bei jedem Push und jedem Pull Request. Der Sinn: Ein Tippfehler in einer
+# Lua-Datei faellt hier auf - und nicht erst beim Anmelden im Spiel, wo WoW
+# das Addon einfach stumm nicht laedt.
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Syntax, Ladeliste und Logik
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Lua 5.1 wird aus dem Quelltext gebaut - genau die Version, die WoW
+      # benutzt. Die Distributionspakete liefern 5.4, und die beiden
+      # unterscheiden sich genug, dass ein Test unter 5.4 wenig aussagt.
+      - name: Gebautes Lua aus dem Zwischenspeicher holen
+        id: lua-cache
+        uses: actions/cache@v6
+        with:
+          path: .werkzeuge
+          key: lua-5.1.5-${{ runner.os }}
+
+      - name: Bauwerkzeuge
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      # tools/test.sh baut Lua selbst, wenn es fehlt, und macht danach:
+      #   1. luac -p ueber alle Lua-Dateien
+      #   2. Abgleich der .toc-Ladeliste gegen die vorhandenen Dateien
+      #   3. die Logiktests
+      - name: Tests
+        run: ./tools/test.sh
+
+  luacheck:
+    name: luacheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: luacheck installieren
+        run: sudo apt-get update && sudo apt-get install -y lua-check
+
+      # Die Konfiguration steht in .luacheckrc - dort sind die WoW-Globals
+      # eingetragen, die luacheck sonst alle als unbekannt melden wuerde.
+      - name: Prüfen
+        run: luacheck .
+
+  toc:
+    name: Interface-Nummer
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Ein reiner Formcheck: Die erste Zeile muss eine funfstellige
+      # Interface-Nummer sein. Ob sie zum LAUFENDEN Patch passt, kann nur
+      # /tcd doctor im Spiel beantworten - das steht so auch im README.
+      - name: Form der .toc prüfen
+        run: |
+          nummer=$(grep -m1 '^## Interface:' TacticalCalloutDock.toc | grep -oE '[0-9]+')
+          if [ -z "$nummer" ]; then
+            echo "Keine Interface-Nummer in TacticalCalloutDock.toc gefunden."
+            exit 1
+          fi
+          if ! echo "$nummer" | grep -qE '^[0-9]{5,6}$'; then
+            echo "Interface-Nummer '$nummer' sieht nicht plausibel aus."
+            exit 1
+          fi
+          echo "Interface: $nummer"
+
+          # Die Version muss ebenfalls dastehen - ohne sie zeigt /tcd doctor
+          # nur ein Fragezeichen an.
+          version=$(grep -m1 '^## Version:' TacticalCalloutDock.toc | sed 's/.*: *//')
+          if [ -z "$version" ]; then
+            echo "Keine Version in TacticalCalloutDock.toc gefunden."
+            exit 1
+          fi
+          echo "Version:   $version"
