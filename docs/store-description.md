@@ -265,31 +265,54 @@ neuesten Abschnitt.
 es ist Blizzard-Material.
 
 **Screenshots** — für WoW-Addons nicht zwingend, aber der wichtigste Grund,
-warum jemand auf „Installieren“ klickt. Vier liegen fertig unter
-`docs/bilder/` und sind auf der Projektseite eingebunden, in dieser
-Reihenfolge: `leiste.png` (die Leiste im Tank-Profil — *was ist das?*),
-`leiste-heiler.png` (dieselbe Leiste im Heiler-Profil — *die Rollen sind
-wirklich verschieden*), `tooltip.png` (Nachricht, Zielkanal und Markierung —
-*was tut ein Klick?*) und `editor.jpg` (der Editor — *wie ändere ich es?*).
+warum jemand auf „Installieren“ klickt.
 
-Für CurseForge sind sie **klein** (477 bis 860 Pixel breit, weil aus dem
-laufenden Spiel zugeschnitten). Für die Projektseite reicht das; wer sie dort
-hochlädt, sollte sie in voller Bildschirmauflösung neu aufnehmen.
+**Was vorliegt:** vier Bilder unter `docs/bilder/`, auf der Projektseite
+eingebunden — `leiste.png`, `leiste-heiler.png`, `tooltip.png` und
+`editor.jpg`. Sie sind aus dem laufenden Spiel zugeschnitten und deshalb
+**klein** (477 bis 860 Pixel breit). Für die Projektseite reicht das. Für
+CurseForge wirken sie mager, und `editor.jpg` zeigt zusätzlich noch den Stand
+**vor** den Änderungen vom 23.08.2026: Die Vorschauzeile unter dem
+Nachrichtenfeld ist darauf noch zu sehen, und „Runter“ ist abgeschnitten.
 
-Diese vier zeigen genau das, was die Beschreibung behauptet:
+### Neu aufnehmen — die Vorbereitung
 
-1. **Die Leiste in einem Key**, waagerecht über den Aktionsleisten, mit dem
-   DPS-Profil. Das ist das Bild, das erklärt, worum es geht.
-2. **Der Editor**, geöffnet auf einem Knopf. Beweist die Behauptung „ohne
-   Lua-Datei bearbeiten“. Liegt als `docs/bilder/editor.jpg` vor.
-3. **Der Chat direkt nach einem Klick**, mit der Ansage im Instanzchat und dem
+Einmal im Spiel setzen, dann bleibt es gespeichert:
+
+```
+/console screenshotFormat png
+/console screenshotQuality 10
+```
+
+PNG statt JPEG, weil eine Benutzeroberfläche aus scharfen Kanten und Text
+besteht — genau das, woran JPEG scheitert. Die Bilder landen danach in
+`World of Warcraft\_retail_\Screenshots\`. Aufgenommen wird mit `Druck`,
+**nicht** mit `Alt`+`Z` — das blendet die Oberfläche aus, und die ist hier der
+Inhalt. In voller Bildschirmauflösung aufnehmen; das Zuschneiden kommt danach.
+
+### Die vier Bilder
+
+1. **Die Leiste in einem Key**, waagerecht über den Aktionsleisten, DPS-Profil,
+   Reiter sichtbar. Das Bild, das erklärt, worum es überhaupt geht.
+2. **Der Editor**, geöffnet auf einem Knopf, sodass rechts Beschriftung,
+   Nachricht, Kanal, Symbol, Zielmarkierung und Ping nebeneinander stehen.
+   Belegt die Behauptung „ohne Lua-Datei bearbeiten“.
+3. **Der Chat direkt nach einem Klick** — die Ansage im Instanzchat und der
    Totenschädel auf dem Ziel im selben Bild. Zeigt die drei Aktionen auf
-   einmal.
-4. **`/tcd doctor`** im Chatfenster. Das ist das Bild, das Vertrauen schafft:
-   Man sieht, dass das Addon über sich selbst Auskunft gibt.
+   einmal. Dafür vorher ein Ziel anvisieren, sonst steht dort „kein Ziel“.
+4. **`/tcd doctor`** im Chatfenster, am besten in einer Gruppe — dann stehen
+   dort Gruppenlage, Markierrecht und der Kanal, in den eine Ansage gerade
+   ginge. Das ist das Bild, das Vertrauen schafft.
 
-Noch nicht vorhanden — sie brauchen einen laufenden Client. Ohne Screenshots
-lässt sich das Projekt anlegen, es sieht auf der Übersichtsseite aber leer aus.
+Ein fünftes wäre der **Tooltip über einem Knopf** (Nachricht mit eingesetzten
+Platzhaltern, Zielkanal, Markierung) — das ist die Fassung, die schon als
+`tooltip.png` vorliegt und nur größer neu aufgenommen werden müsste.
+
+### Danach
+
+Die Rohbilder irgendwo im Projektordner ablegen; Zuschnitt, Größe, Benennung
+und das Einbinden in `docs/index.html` sind Handarbeit, die nichts vom
+laufenden Client braucht.
 
 ---
 
