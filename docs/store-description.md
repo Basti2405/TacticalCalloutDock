@@ -268,12 +268,27 @@ es ist Blizzard-Material.
 warum jemand auf „Installieren“ klickt.
 
 **Was vorliegt:** vier Bilder unter `docs/bilder/`, auf der Projektseite
-eingebunden — `leiste.png`, `leiste-heiler.png`, `tooltip.png` und
-`editor.jpg`. Sie sind aus dem laufenden Spiel zugeschnitten und deshalb
-**klein** (477 bis 860 Pixel breit). Für die Projektseite reicht das. Für
-CurseForge wirken sie mager, und `editor.jpg` zeigt zusätzlich noch den Stand
-**vor** den Änderungen vom 23.08.2026: Die Vorschauzeile unter dem
-Nachrichtenfeld ist darauf noch zu sehen, und „Runter“ ist abgeschnitten.
+eingebunden — `leiste.png` (477×188), `leiste-heiler.png` (527×211),
+`tooltip.png` (546×287) und `editor.png` (878×688). Alle sind aus dem
+laufenden Spiel zugeschnitten. Die drei ersten sind für CurseForge **klein**;
+`editor.png` ist am 24.08.2026 durch einen Zuschnitt aus einer 3440×1440-
+Aufnahme ersetzt worden und zeigt seitdem den Editor ohne Vorschauzeile und
+mit den Knöpfen in zwei Reihen.
+
+**Was auf allen vier veraltet ist.** Die Aufnahmen stammen vom 23.08.2026,
+die sprachliche Überarbeitung kam am 24.08. Sichtbar falsch sind deshalb:
+
+| Auf dem Bild | Im Addon jetzt |
+|---|---|
+| Reiter „Schaden“ (alle vier) | „DPS“ |
+| „Umschalt-Klick: diesen Knopf bearbeiten“ (beide Tooltips) | „Shift-Klick: …“ |
+| „Ziehe um die Ecke – Sichtlinie …“ | „… – LoS-Pull …“ |
+| „Profil: Schaden“, „%m Mauszeigerziel“ (Editor) | „DPS“, „%m Mouseover“ |
+| rote Blizzard-Auswahlfelder (Editor) | eigene dunkle Felder mit weißem Text |
+
+Die letzte Zeile wiegt am schwersten: Der Lesbarkeits-Fix (`a6f30ca`) wurde
+sechs Minuten **nach** der Aufnahme committet. Das Bild zeigt also genau den
+Zustand, den der Changelog als behoben ausweist.
 
 ### Neu aufnehmen — die Vorbereitung
 
