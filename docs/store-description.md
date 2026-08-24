@@ -295,23 +295,30 @@ lässt sich das Projekt anlegen, es sieht auf der Übersichtsseite aber leer aus
 
 ## Ablauf der Veröffentlichung
 
-Der Teil, den nur Sebastian über seine Konten erledigen kann — in dieser
-Reihenfolge, weil jeder Schritt den nächsten freischaltet.
+**Stand 24.08.2026:** Der Tag `v1.0` ist gesetzt und das GitHub-Release steht
+unter <https://github.com/Basti2405/TacticalCalloutDock/releases/tag/v1.0>.
+Zu CurseForge ging dabei nichts, weil Projekt-ID und `CF_API_KEY` fehlten.
+**Der Tag ist damit verbraucht** — ein zweites `git push origin v1.0` löst
+nichts mehr aus. Der Nachschub läuft deshalb über Schritt 4.
 
-**1. Projekt auf CurseForge anlegen.**
+Die verbleibenden Schritte kann nur Sebastian über seine Konten erledigen.
+
+**1. Projekt auf CurseForge anlegen** (falls noch nicht geschehen).
 <https://legacy.curseforge.com/wow/addons> → *Start Project*. Name
 „Tactical Callout Dock“, Summary und Description aus dieser Datei, Kategorie
-*Chat & Communication*, Logo `docs/logo.png`. Danach steht die Projekt-ID in
-der URL bzw. auf der Projektseite.
+*Chat & Communication*, Logo `docs/curseforge/logo-kompakt-400.png`. Danach
+steht die Projekt-ID in der URL bzw. auf der Projektseite. Solange das Projekt
+auf Freischaltung wartet, ist es öffentlich nicht auffindbar — die ID gibt es
+trotzdem schon.
 
-**2. Die ID in die `.toc` eintragen.** Dort steht sie auskommentiert bereit:
+**2. Die ID in die `.toc` eintragen.** Dort steht sie auskommentiert bereit;
+das führende `# ` muss weg:
 
 ```
 ## X-Curse-Project-ID: <die Zahl>
 ```
 
-Erst dann lädt der Packager überhaupt zu CurseForge hoch — vorher entsteht bei
-einem Tag nur ein GitHub-Release.
+Erst dann lädt der Packager überhaupt zu CurseForge hoch.
 
 **3. Den API-Schlüssel hinterlegen.**
 CurseForge → *My API Tokens* → Token erzeugen. Dann im Repository unter
@@ -322,18 +329,31 @@ Kommandozeile geht es auch, ohne dass der Schlüssel im Verlauf landet:
 gh secret set CF_API_KEY --repo Basti2405/TacticalCalloutDock
 ```
 
-Der Befehl fragt den Wert danach interaktiv ab.
+Der Befehl fragt den Wert danach interaktiv ab. Kontrolle mit `gh secret list`
+— dort muss `CF_API_KEY` auftauchen (der Wert selbst bleibt verborgen).
 
-**4. Erst jetzt den Versions-Tag setzen.**
+**4. Den Tag `v1.0` auf den neuen Commit schieben.**
+Schritt 2 macht ohnehin einen Commit — die Projekt-ID steht in der `.toc`.
+Weil die 1.0 auf CurseForge noch nie erschienen ist, ist das Verschieben des
+Tags sauberer als eine Pflichtversion 1.0.1 für eine einzige Metadatenzeile:
 
 ```sh
-git tag v1.0 && git push origin v1.0
+git commit -am "CurseForge-Projekt-ID eingetragen"
+git push origin main
+git tag -f v1.0 && git push --force origin v1.0
 ```
 
-Der Release-Workflow prüft, dass der Tag zur Version in der `.toc` passt, lässt
-die Tests laufen, baut das Paket und lädt es hoch.
+Der Workflow läuft dann als **Tag-Lauf**: Er prüft den Tag gegen die `.toc`,
+lässt die Tests laufen, baut das Paket und lädt es als reguläre Fassung zu
+CurseForge. Das GitHub-Release unter `v1.0` wird dabei an Ort und Stelle
+aktualisiert, die URL bleibt.
 
-**Vorher unbedingt:** das Addon einmal im Spiel starten und `/tcd doctor`
+*Nur zum Ausprobieren:* `gh workflow run release.yml --ref main` startet den
+Workflow ohne Tag. Dann steht in `GITHUB_REF` der Zweig, der Tag-Abgleich wird
+übersprungen und der Packager lädt eine **Alpha** hoch — brauchbar zum Testen
+der Zugangsdaten, nicht für die Erstveröffentlichung.
+
+**Vor jedem Upload:** das Addon einmal im Spiel starten und `/tcd doctor`
 ansehen. Ein Paket, das beim ersten Login einen Lua-Fehler wirft, ist schlechter
 als gar kein Paket — und die erste Bewertung auf CurseForge bleibt stehen.
 
