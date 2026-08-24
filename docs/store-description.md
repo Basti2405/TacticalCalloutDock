@@ -293,6 +293,42 @@ lässt sich das Projekt anlegen, es sieht auf der Übersichtsseite aber leer aus
 
 ---
 
+## Die Felder beim Anlegen — was wohin gehört
+
+Damit das Formular in einem Durchgang durchläuft. Was hier nicht steht, bleibt
+auf der Voreinstellung.
+
+| Feld | Wert |
+|---|---|
+| **Project Name** | `Tactical Callout Dock` |
+| **Summary** | die eine Zeile weiter oben (122 Zeichen, Grenze ist 255) |
+| **Description** | der **englische** Block weiter oben, vollständig |
+| **Class** | *Addons* |
+| **Main Category** | *Chat & Communication* |
+| **License** | *MIT* |
+| **Project URL / Slug** | `tactical-callout-dock` |
+
+Nach dem Anlegen, in den Projekteinstellungen:
+
+| Feld | Wert |
+|---|---|
+| **Avatar / Logo** | `docs/curseforge/logo-kompakt-400.png` (400×400) |
+| **Source URL** | <https://github.com/Basti2405/TacticalCalloutDock> |
+| **Issues URL** | <https://github.com/Basti2405/TacticalCalloutDock/issues> |
+| **Wiki / Website** | <https://basti2405.github.io/TacticalCalloutDock/> |
+| **Donations** | leer lassen — siehe den Hinweis am Anfang dieser Datei |
+
+**Screenshots** kommen als eigener Reiter am Projekt. Die vier unter
+`docs/bilder/` sind aus dem laufenden Spiel geschnitten und entsprechend klein
+(477 bis 860 Pixel breit). Für die Projektseite reicht das, auf CurseForge
+wirken sie mager — dort besser in voller Bildschirmauflösung neu aufnehmen.
+
+**Nicht vergessen:** Die **Projekt-ID** steht danach in der URL der
+Projektseite und im Reiter *Overview*. Sie ist der einzige Wert, den das
+Repository von hier braucht — weiter bei Schritt 2 unten.
+
+---
+
 ## Ablauf der Veröffentlichung
 
 **Stand 24.08.2026:** Der Tag `v1.0` ist gesetzt und das GitHub-Release steht
