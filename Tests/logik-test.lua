@@ -5,7 +5,7 @@
 -- ---------------------------------------------------------------------------
 -- Dieses Addon trifft bei jedem Klick drei Entscheidungen: In welchen Kanal
 -- geht die Ansage? Was steht nach dem Einsetzen der Platzhalter darin? Und
--- greift die Wiederholsperre? Alle drei haengen an Eingabewerten, nicht an
+-- greift die Wiederholungssperre? Alle drei haengen an Eingabewerten, nicht an
 -- einem laufenden Client - genau deshalb liegen sie in Logik\ und nicht in
 -- UI\ .
 --
@@ -30,7 +30,7 @@ local PFAD = os.getenv("TCDPFAD") or "."
 -- ===========================================================================
 
 -- Eine Uhr, die stillsteht. Mit einer echten waere jede Aussage ueber die
--- Wiederholsperre von der Laufzeit des Rechners abhaengig.
+-- Wiederholungssperre von der Laufzeit des Rechners abhaengig.
 local UHR = 1000
 
 function GetTime() return UHR end
@@ -110,7 +110,7 @@ function GetInstanceInfo() return "Testinstanz", "party" end
 
 C_AddOns = {
     GetAddOnMetadata = function(_, feld)
-        if feld == "Version" then return "0.1.0" end
+        if feld == "Version" then return "1.0" end
         if feld == "Interface" then return "120100" end
         return nil
     end,
@@ -379,7 +379,7 @@ do
     welt.anfuehrer = true
     gleich(KB("RAID_WARNING"), "RAID_WARNING", "mit Anfuehrerrecht geht die Warnung durch")
     welt.anfuehrer = false
-    gleich(KB("RAID_WARNING"), "RAID", "ohne Recht wird aus der Warnung normaler Schlachtzugschat")
+    gleich(KB("RAID_WARNING"), "RAID", "ohne Recht wird aus der Warnung normaler Raidchat")
     welt.anfuehrer = true
 
     -- Die drei, die immer gehen.
@@ -468,7 +468,7 @@ do
     melde(#mitschrift.marken == 1 and #mitschrift.chat == 1, "Markierung und Ansage genau einmal")
 
     -- ---------------------------------------------------------------------
-    -- Wiederholsperre
+    -- Wiederholungssperre
     -- ---------------------------------------------------------------------
     mitschriftLeeren()
     ergebnis = TCD.Ausloesen.Knopf(knopf, UHR + 0.5)
@@ -624,7 +624,7 @@ do
 
     local text = table.concat(zeilen, "\n")
     melde(text:find("ChatSenden"), "sie nennt die wichtigste Schnittstelle")
-    melde(text:find("0.1.0", 1, true), "sie nennt die Fassung")
+    melde(text:find("1.0", 1, true), "sie nennt die Fassung")
 
     -- Alles Wichtige ist in der Testumgebung vorhanden - der Bericht muss
     -- also gruen ausfallen.

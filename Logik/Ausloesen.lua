@@ -40,7 +40,7 @@ local A = TCD.API
 local Z = TCD.Ziele
 
 -- ---------------------------------------------------------------------------
--- Die Wiederholsperre
+-- Die Wiederholungssperre
 -- ---------------------------------------------------------------------------
 -- Schluessel ist die Knopftabelle selbst, nicht ihr Index: Wer im Editor
 -- einen Knopf nach oben schiebt, soll damit nicht seine Sperre verlieren.
@@ -91,7 +91,7 @@ function Aus.Knopf(knopf, jetzt)
     jetzt = jetzt or A.Ruf("Zeit") or 0
 
     -- ---------------------------------------------------------------------
-    -- Wiederholsperre
+    -- Wiederholungssperre
     -- ---------------------------------------------------------------------
     -- Sie greift VOR allem anderen: Auch die Markierung wird nicht neu
     -- gesetzt. Sonst haette man einen Knopf, der zwar nichts mehr sagt, aber

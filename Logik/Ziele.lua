@@ -144,7 +144,7 @@ end
 -- ===========================================================================
 -- Platzhalter
 -- ===========================================================================
--- %t  Ziel        %f  Fokus        %m  Mauszeigerziel        %p  du selbst
+-- %t  Ziel        %f  Fokus        %m  Mouseover        %p  du selbst
 -- %%  ein echtes Prozentzeichen
 --
 -- Alles andere bleibt stehen, wie es dasteht: Aus "%x" wird "%x". Das ist
@@ -157,7 +157,7 @@ end
 -- einmal als Muster gelesen (bei einem Ersatz-STRING waere ein "%" darin ein
 -- Fehler - Spielernamen enthalten zwar keinen, Spielertexte schon).
 --
--- Einschraenkung, die man kennen muss: "50%mana" wird zu "50<Mauszeigerziel>ana".
+-- Einschraenkung, die man kennen muss: "50%mana" wird zu "50<Mouseover>ana".
 -- Wer ein Prozentzeichen direkt vor einem Buchstaben braucht, schreibt "%%".
 -- ---------------------------------------------------------------------------
 

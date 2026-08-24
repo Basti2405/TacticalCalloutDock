@@ -7,9 +7,9 @@
 
 ## Title: Tactical Callout Dock
 ## Notes: A draggable dock of one-click tactical callouts for Mythic+ and raids: chat message, raid marker and ping in a single click.
-## Notes-deDE: Eine verschiebbare Leiste mit taktischen Ansagen fuer Mythik+ und Schlachtzuege: Chatnachricht, Zielmarkierung und Ping mit einem Klick.
+## Notes-deDE: Eine verschiebbare Leiste mit taktischen Ansagen fuer Mythic+ und Raids: Chatnachricht, Zielmarkierung und Ping mit einem Klick.
 ## Author: Basti2405
-## Version: 0.1.0
+## Version: 1.0
 ## IconTexture: Interface\Icons\Ability_Warrior_RallyingCry
 
 ## SavedVariables: TacticalCalloutDockDB

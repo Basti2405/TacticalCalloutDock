@@ -11,7 +11,7 @@
 -- Handel. Was hier steht, sind 130 Zeilen, die genau eines koennen: einen
 -- Knopf am Rand der Minikarte halten, den man im Kreis ziehen kann.
 --
--- Der Preis: Wer eine Sammelleiste wie Titan Panel oder ChocolateBar
+-- Der Preis: Wer eine Broker-Leiste wie Titan Panel oder ChocolateBar
 -- benutzt, findet dieses Addon dort nicht. Dafuer gibt es  /tcd  - und wer
 -- den Knopf gar nicht will, blendet ihn mit  /tcd minimap  aus.
 -- ===========================================================================

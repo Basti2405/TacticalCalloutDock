@@ -66,7 +66,7 @@ local VORGABE = {
         versteckt = false,
     },
 
-    -- Wiederholsperre je Knopf. 1,5 Sekunden ist kein Gaengelband, sondern
+    -- Wiederholungssperre je Knopf. 1,5 Sekunden ist kein Gaengelband, sondern
     -- Schutz: Der Server drosselt Chatnachrichten selbst, und wer dort
     -- anlaeuft, verliert im Zweifel die Verbindung. Wer es nicht will,
     -- stellt im Editor 0 ein.

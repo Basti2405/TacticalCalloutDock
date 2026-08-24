@@ -92,7 +92,7 @@ L.ROLE_DAMAGER = "Damage"
 -- ---------------------------------------------------------------------------
 -- AUTO ist die Vorgabe und der Grund, warum das Addon ueberhaupt eine
 -- Kanalwahl hat: dieselbe Taste soll im Schluesselstein in den
--- Instanzchat gehen, im Schlachtzug in den Schlachtzugschat und allein
+-- Instanzchat gehen, im Schlachtzug in den Raidchat und allein
 -- stehend niemanden anschreien.
 L.CH_AUTO          = "Automatic"
 L.CH_AUTO_DESC     = "Instance chat, raid, party or say - whichever fits right now."
@@ -235,7 +235,7 @@ L.SAY_T_LOS       = "Pulling around the corner - line of sight, stay behind me"
 L.LBL_T_PATROL    = "Pat"
 L.SAY_T_PATROL    = "Wait for the patrol"
 L.LBL_T_SKIP      = "Skip"
-L.SAY_T_SKIP      = "Skipping this pack - invisibility now"
+L.SAY_T_SKIP      = "Skipping this pack - shroud now"
 L.LBL_T_GATHER    = "Wait"
 L.SAY_T_GATHER    = "Still gathering - do not pull yet"
 L.LBL_T_BIGPULL   = "Big"

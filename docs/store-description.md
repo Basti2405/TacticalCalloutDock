@@ -72,7 +72,7 @@ instead of disappearing.
 ### Three role profiles, ready to use
 
 Tank, healer and damage, eight callouts each, taken from actual keystone runs —
-from *"skipping this pack - invisibility now"* to *"interrupts ready - I kick
+from *"skipping this pack - shroud now"* to *"interrupts ready - I kick
 first"*. Switch with the tabs on the dock or `/tcd tank`.
 
 ### Edit everything in game
@@ -152,10 +152,9 @@ MIT licensed. Built and verified against patch 12.1.0 (interface 120100).
 ```
 ## Tactical Callout Dock
 
-Im Schlüsselstein ist die Ansage oft wichtiger als die Rotation: „Warten,
-Patrouille", „LoS-Pull um die Ecke", „Brauche Mana". Nur hat man beim Tippen
-beide Hände am Charakter — und wenn die Zeile endlich dasteht, ist der Pull
-gelaufen.
+Im Key ist die Ansage oft wichtiger als die Rotation: „Warten, Patrouille“,
+„LoS-Pull um die Ecke“, „Brauche Mana“. Nur hat man beim Tippen beide Hände am
+Charakter — und wenn die Zeile endlich dasteht, ist der Pull gelaufen.
 
 Tactical Callout Dock legt eine kleine, frei verschiebbare Leiste auf den
 Bildschirm. Ein Klick, und die Ansage steht im richtigen Kanal, der
@@ -163,9 +162,9 @@ Totenschädel sitzt auf dem Ziel und der Ping ist gesetzt.
 
 ### Drei Aktionen auf einem Knopf
 
-* **Chatnachricht** mit Platzhaltern: `%t` Ziel, `%f` Fokus, `%m`
-  Mauszeigerziel, `%p` du selbst. Gibt es das Ziel nicht, steht dort „kein
-  Ziel" statt einer Lücke.
+* **Chatnachricht** mit Platzhaltern: `%t` Ziel, `%f` Fokus, `%m` Mouseover,
+  `%p` du selbst. Gibt es das Ziel nicht, steht dort „kein Ziel“ statt einer
+  Lücke.
 * **Zielmarkierung** auf dem aktuellen Ziel.
 * **Ping** des Spiels — Angriff, Warnung, bin unterwegs, Hilfe.
 
@@ -173,14 +172,14 @@ Totenschädel sitzt auf dem Ziel und der Ping ist gesetzt.
 
 Hier liegen die meisten Ansage-Addons daneben: Ein fest auf `RAID` gestellter
 Knopf sendet in einer Fünfergruppe **nichts** — und meldet das auch nicht.
-Dieselbe Taste geht hier je nach Lage in Instanzchat, Schlachtzug, Gruppe oder
-/sagen. Auch fest eingestellte Kanäle fallen geordnet zurück, statt ins Leere
-zu senden.
+Dieselbe Taste geht hier je nach Lage in Instanzchat, Raid, Gruppe oder /sagen.
+Auch fest eingestellte Kanäle fallen geordnet zurück, statt ins Leere zu
+senden.
 
 ### Drei Rollenprofile, fertig bestückt
 
-Tank, Heiler und Schaden mit je acht Ansagen aus dem echten
-Schlüsselstein-Alltag. Umschaltbar über Reiter an der Leiste oder `/tcd tank`.
+Tank, Heiler und DPS mit je acht Ansagen aus dem echten Key-Alltag.
+Umschaltbar über die Reiter an der Leiste oder `/tcd tank`.
 
 ### Editor im Spiel
 
@@ -190,9 +189,9 @@ stehen als Felder nebeneinander.
 
 ### Es arbeitet auch im Kampf
 
-Kein Knopf wirkt eine Fähigkeit, also braucht keiner eine geschützte Vorlage.
+Kein Knopf wirkt eine Fähigkeit, also braucht keiner ein Secure Template.
 Profilwechsel, Größe, Ausrichtung und selbst das Verschieben funktionieren
-mitten im Pull. Es gibt keine Zeile, die etwas „später nachholt".
+mitten im Pull. Es gibt keine Zeile, die etwas „später nachholt“.
 
 ### Zu den Addon-Regeln
 
@@ -217,7 +216,7 @@ Das Feld hat bei der **Erstveröffentlichung** eine andere Aufgabe als später:
 Dort kannte niemand das Addon vorher, ein Änderungsprotokoll liefe also ins
 Leere. Hinein gehört, was das Addon kann und wogegen es geprüft ist.
 
-### Für den ersten Upload (v0.1.0)
+### Für den ersten Upload (v1.0)
 
 ```
 **First public release.**
@@ -266,7 +265,7 @@ neuesten Abschnitt.
 es ist Blizzard-Material.
 
 **Screenshots** — für WoW-Addons nicht zwingend, aber der wichtigste Grund,
-warum jemand auf „Installieren" klickt. Vier liegen fertig unter
+warum jemand auf „Installieren“ klickt. Vier liegen fertig unter
 `docs/bilder/` und sind auf der Projektseite eingebunden, in dieser
 Reihenfolge: `leiste.png` (die Leiste im Tank-Profil — *was ist das?*),
 `leiste-heiler.png` (dieselbe Leiste im Heiler-Profil — *die Rollen sind
@@ -279,10 +278,10 @@ hochlädt, sollte sie in voller Bildschirmauflösung neu aufnehmen.
 
 Diese vier zeigen genau das, was die Beschreibung behauptet:
 
-1. **Die Leiste in einem Schlüsselstein**, waagerecht über den Aktionsleisten,
-   mit dem Schaden-Profil. Das ist das Bild, das erklärt, worum es geht.
+1. **Die Leiste in einem Key**, waagerecht über den Aktionsleisten, mit dem
+   DPS-Profil. Das ist das Bild, das erklärt, worum es geht.
 2. **Der Editor**, geöffnet auf einem Knopf. Beweist die Behauptung „ohne
-   Lua-Datei bearbeiten". Liegt als `docs/bilder/editor.jpg` vor.
+   Lua-Datei bearbeiten“. Liegt als `docs/bilder/editor.jpg` vor.
 3. **Der Chat direkt nach einem Klick**, mit der Ansage im Instanzchat und dem
    Totenschädel auf dem Ziel im selben Bild. Zeigt die drei Aktionen auf
    einmal.
@@ -301,7 +300,7 @@ Reihenfolge, weil jeder Schritt den nächsten freischaltet.
 
 **1. Projekt auf CurseForge anlegen.**
 <https://legacy.curseforge.com/wow/addons> → *Start Project*. Name
-„Tactical Callout Dock", Summary und Description aus dieser Datei, Kategorie
+„Tactical Callout Dock“, Summary und Description aus dieser Datei, Kategorie
 *Chat & Communication*, Logo `docs/logo.png`. Danach steht die Projekt-ID in
 der URL bzw. auf der Projektseite.
 
@@ -328,7 +327,7 @@ Der Befehl fragt den Wert danach interaktiv ab.
 **4. Erst jetzt den Versions-Tag setzen.**
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0
+git tag v1.0 && git push origin v1.0
 ```
 
 Der Release-Workflow prüft, dass der Tag zur Version in der `.toc` passt, lässt

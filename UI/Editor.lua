@@ -876,7 +876,7 @@ local function fensterBauen()
     umbruchHinweis:SetWidth(330)
     umbruchHinweis:SetJustifyH("LEFT")
 
-    -- Die Wiederholsperre braucht ihre Erklaerung sichtbar, nicht im Tooltip:
+    -- Die Wiederholungssperre braucht ihre Erklaerung sichtbar, nicht im Tooltip:
     -- Eine Sperre, die man nicht versteht, stellt man auf 0.
     local drossHinweis = beschriftung(Y, L.CFG_THROTTLE_TIP, "GameFontDisableSmall")
     drossHinweis:SetPoint("TOPLEFT", schalter.drosselung, "TOPRIGHT", 30, -4)
@@ -905,7 +905,7 @@ function E:Auffrischen()
     end
 end
 
--- index: welcher Knopf gleich bearbeitet werden soll (Umschalt-Klick auf der
+-- index: welcher Knopf gleich bearbeitet werden soll (Shift-Klick auf der
 -- Leiste). Ohne Angabe bleibt die bisherige Auswahl stehen.
 function E:Oeffnen(index)
     fensterBauen()

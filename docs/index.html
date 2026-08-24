@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tactical Callout Dock — Ansagen für Mythik+ auf einen Klick</title>
-<meta name="description" content="WoW-Addon: eine verschiebbare Leiste mit taktischen Ansagen für Mythik+ und Schlachtzüge. Chatnachricht, Zielmarkierung und Ping mit einem Klick.">
+<title>Tactical Callout Dock — Ansagen für Mythic+ auf einen Klick</title>
+<meta name="description" content="WoW-Addon: eine verschiebbare Leiste mit taktischen Ansagen für Mythic+ und Raids. Chatnachricht, Zielmarkierung und Ping mit einem Klick.">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -229,7 +229,7 @@ footer a { color: var(--ink-leise); }
     </h1>
 
     <p class="vorspann">
-      <span lang="de">Im Schlüsselstein ist die Ansage oft wichtiger als die Rotation – nur hat
+      <span lang="de">Im Key ist die Ansage oft wichtiger als die Rotation – nur hat
         man beim Tippen beide Hände am Charakter. Tactical Callout Dock legt eine kleine
         Leiste auf den Bildschirm: ein Klick, und die Ansage steht im richtigen Kanal,
         der Totenschädel sitzt auf dem Ziel und der Ping ist gesetzt.</span>
@@ -261,7 +261,7 @@ footer a { color: var(--ink-leise); }
       <div class="reiter" role="tablist" id="reiter">
         <button type="button" role="tab" data-rolle="TANK"    aria-selected="false"><span lang="de">Tank</span><span lang="en">Tank</span></button>
         <button type="button" role="tab" data-rolle="HEILER"  aria-selected="false"><span lang="de">Heiler</span><span lang="en">Healer</span></button>
-        <button type="button" role="tab" data-rolle="DPS"     aria-selected="true"><span lang="de">Schaden</span><span lang="en">Damage</span></button>
+        <button type="button" role="tab" data-rolle="DPS"     aria-selected="true"><span lang="de">DPS</span><span lang="en">Damage</span></button>
       </div>
 
       <div class="leiste" id="leiste"></div>
@@ -300,8 +300,8 @@ footer a { color: var(--ink-leise); }
 
       <div class="karte">
         <h3><span lang="de">Drei Rollenprofile, fertig bestückt</span><span lang="en">Three role profiles, ready to use</span></h3>
-        <p><span lang="de">Tank, Heiler und Schaden mit je acht Ansagen aus dem echten
-          Schlüsselstein-Alltag. Umschalten über die Reiter an der Leiste oder
+        <p><span lang="de">Tank, Heiler und DPS mit je acht Ansagen aus dem echten
+          Key-Alltag. Umschalten über die Reiter an der Leiste oder
           <code>/tcd tank</code>.</span>
           <span lang="en">Tank, healer and damage, eight callouts each, taken from actual
           keystone runs. Switch with the tabs on the dock or <code>/tcd tank</code>.</span></p>
@@ -319,8 +319,8 @@ footer a { color: var(--ink-leise); }
 
       <div class="karte">
         <h3><span lang="de">Es arbeitet auch im Kampf</span><span lang="en">It works during combat</span></h3>
-        <p><span lang="de">Kein Knopf wirkt eine Fähigkeit – deshalb braucht keiner eine
-          geschützte Vorlage. Profilwechsel, Größe, Ausrichtung und selbst das Verschieben
+        <p><span lang="de">Kein Knopf wirkt eine Fähigkeit – deshalb braucht keiner ein
+          Secure Template. Profilwechsel, Größe, Ausrichtung und selbst das Verschieben
           funktionieren mitten im Pull. Es gibt keine Zeile, die etwas „später nachholt“.</span>
           <span lang="en">No button casts a spell, so none needs a secure template. Switching
           profiles, size, direction and even dragging all work mid-pull. Not one line defers
@@ -358,7 +358,7 @@ footer a { color: var(--ink-leise); }
           <figcaption>
             <span lang="de"><b>Dieselbe Leiste, andere Rolle.</b> Ein Klick auf den Reiter
               tauscht die Kn&ouml;pfe aus &ndash; hier die Heiler-Ansagen: Mana, Trinken,
-              Defensives, Entzaubern. Jede Rolle bringt ihre eigenen acht mit, und alle lassen
+              Defensives, Dispel. Jede Rolle bringt ihre eigenen acht mit, und alle lassen
               sich &auml;ndern.</span>
             <span lang="en"><b>Same dock, different role.</b> One click on a tab swaps the
               buttons &ndash; these are the healer callouts: mana, drinking, defensives,
@@ -427,9 +427,9 @@ footer a { color: var(--ink-leise); }
         </tr>
       </thead>
       <tbody>
-        <tr><td><span lang="de">Schlüsselstein oder Schlachtzugsbrowser</span><span lang="en">Keystone or raid finder</span></td>
+        <tr><td><span lang="de">Key oder Raidbrowser</span><span lang="en">Keystone or raid finder</span></td>
             <td><span class="pfeil">→</span> <code>INSTANCE_CHAT</code></td></tr>
-        <tr><td><span lang="de">Schlachtzug</span><span lang="en">Raid</span></td>
+        <tr><td><span lang="de">Raid</span><span lang="en">Raid</span></td>
             <td><span class="pfeil">→</span> <code>RAID</code></td></tr>
         <tr><td><span lang="de">Gruppe</span><span lang="en">Party</span></td>
             <td><span class="pfeil">→</span> <code>PARTY</code></td></tr>
@@ -440,8 +440,8 @@ footer a { color: var(--ink-leise); }
 
     <p class="hinweis" style="margin-top:1.5rem">
       <span lang="de">Auch fest eingestellte Kanäle fallen geordnet zurück, statt ins Leere zu
-        senden: Eine Schlachtzugswarnung ohne Anführerrecht wird zu normalem
-        Schlachtzugschat, <code>PARTY</code> in einer Instanzgruppe zu <code>INSTANCE_CHAT</code>.
+        senden: Eine Schlachtzugswarnung ohne Lead wird zu normalem Raidchat,
+        <code>PARTY</code> in einer Instanzgruppe zu <code>INSTANCE_CHAT</code>.
         Und wenn eine Ansage dadurch in <code>/sagen</code> landet, sagt das Addon es einmal.</span>
       <span lang="en">Fixed channels fall back in order too, rather than sending into the void:
         a raid warning without lead becomes ordinary raid chat, <code>PARTY</code> inside an
@@ -465,7 +465,7 @@ footer a { color: var(--ink-leise); }
       </tbody>
     </table>
     <p class="hinweis" style="margin-top:1.2rem">
-      <span lang="de">Umschalt-Klick oder Rechtsklick auf einen Knopf der Leiste öffnet den
+      <span lang="de">Shift-Klick oder Rechtsklick auf einen Knopf der Leiste öffnet den
         Editor genau bei diesem Knopf.</span>
       <span lang="en">Shift-click or right-click a button on the dock to open the editor at
         exactly that button.</span>
@@ -499,7 +499,7 @@ footer a { color: var(--ink-leise); }
       <div class="karte">
         <h3><span lang="de">Es kommt ohne Fremdbibliotheken aus.</span><span lang="en">It ships without external libraries.</span></h3>
         <p><span lang="de">Kein Ace, kein LibDataBroker, kein LibDBIcon. Der Knopf an der
-          Minikarte ist von Hand gebaut. Dafür findet keine Sammelleiste wie Titan Panel
+          Minikarte ist von Hand gebaut. Dafür findet keine Broker-Leiste wie Titan Panel
           dieses Addon – das ist der Preis, und er steht so auch im README.</span>
           <span lang="en">No Ace, no LibDataBroker, no LibDBIcon. The minimap button is built by
           hand. The price is that brokers like Titan Panel will not find this addon – that
@@ -573,34 +573,34 @@ footer a { color: var(--ink-leise); }
   /* Die drei Profile. text: [deutsch, englisch] */
   var PROFILE = {
     TANK: [
-      { k: ["LoS","LoS"],       s: S.lauf,   t: ["Ziehe um die Ecke – Sichtlinie, bleibt hinter mir","Pulling around the corner - line of sight, stay behind me"] },
+      { k: ["LoS","LoS"],       s: S.lauf,   t: ["Ziehe um die Ecke – LoS-Pull, bleibt hinter mir","Pulling around the corner - line of sight, stay behind me"] },
       { k: ["Pat","Pat"],       s: S.uhr,    t: ["Warten, Patrouille kommt","Wait for the patrol"] },
-      { k: ["Skip","Skip"],     s: S.auge,   t: ["Gruppe wird geskippt – Unsichtbarkeit jetzt","Skipping this pack - invisibility now"] },
-      { k: ["Warte","Wait"],    s: S.hand,   t: ["Sammle noch ein – bitte noch nicht anfangen","Still gathering - do not pull yet"] },
+      { k: ["Skip","Skip"],     s: S.auge,   t: ["Pack wird geskippt – Shroud jetzt","Skipping this pack - shroud now"] },
+      { k: ["Warte","Wait"],    s: S.hand,   t: ["Ich sammle noch – bitte noch nicht pullen","Still gathering - do not pull yet"] },
       { k: ["Groß","Big"],      s: S.ruf,    t: ["Großer Pull – Cooldowns bitte","Big pull incoming - cooldowns please"] },
       { k: ["Schädel","Skull"], s: S.schaedel, marke: ["Totenschädel","Skull"], t: ["Fokus Totenschädel %t","Focus skull %t"] },
-      { k: ["Kite","Kite"],     s: S.pfeil,  t: ["Ich kite den – bitte nicht spotten","Kiting this one - do not taunt"] },
-      { k: ["Hilfe","Help"],    s: S.schild, t: ["Bin tief – externen Cooldown bitte","I am low - external cooldown please"] }
+      { k: ["Kite","Kite"],     s: S.pfeil,  t: ["Ich kite den – bitte nicht taunten","Kiting this one - do not taunt"] },
+      { k: ["Hilfe","Help"],    s: S.schild, t: ["Bin low – External bitte","I am low - external cooldown please"] }
     ],
     HEILER: [
       { k: ["Mana","Mana"],     s: S.trank,  t: ["Brauche Mana – kurze Pause bitte","Need mana - short break please"] },
-      { k: ["Trinken","Drink"], s: S.becher, t: ["Ich trinke, einen Moment","Drinking, give me a moment"] },
-      { k: ["Defs","Defs"],     s: S.schild, t: ["Defensives jetzt – gleich kommt viel Schaden","Defensives now - heavy damage incoming"] },
-      { k: ["Disp","Disp"],     s: S.funke,  t: ["Ich entzaubere – bitte auseinander","Dispelling - spread out"] },
+      { k: ["Trink","Drink"],   s: S.becher, t: ["Ich trinke, einen Moment","Drinking, give me a moment"] },
+      { k: ["Defs","Defs"],     s: S.schild, t: ["Defensives jetzt – gleich kommt schwerer Schaden","Defensives now - heavy damage incoming"] },
+      { k: ["Disp","Disp"],     s: S.funke,  t: ["Ich dispelle – bitte auseinander","Dispelling - spread out"] },
       { k: ["Rez","Rez"],       s: S.kreuzH, ping: ["Hilfe","Assist"], t: ["Bin tot – Kampfrez bitte","I am down - combat res please"] },
       { k: ["Pat","Pat"],       s: S.uhr,    t: ["Warten, Patrouille kommt","Wait for the patrol"] },
       { k: ["Stopp","Stop"],    s: S.stopp,  t: ["Bitte noch nicht pullen","Do not pull yet"] },
-      { k: ["Lust","Lust"],     s: S.blitz,  t: ["Kampfrausch bei diesem Pull","Bloodlust on this pull"] }
+      { k: ["Lust","Lust"],     s: S.blitz,  t: ["Bloodlust bei diesem Pull","Bloodlust on this pull"] }
     ],
     DPS: [
       { k: ["Kick","Kick"],     s: S.stopp,  t: ["Unterbrecher stehen – ich kicke zuerst","Interrupts ready - I kick first"] },
       { k: ["Schädel","Skull"], s: S.schaedel, marke: ["Totenschädel","Skull"], t: ["Fokus Totenschädel %t","Focus skull %t"] },
       { k: ["Kreuz","Cross"],   s: S.kreuz,  marke: ["Kreuz","Cross"], t: ["Kreuz ist das zweite Ziel","Cross is the second target"] },
-      { k: ["CC","CC"],         s: S.mond,   marke: ["Mond","Moon"], t: ["Mond ist unter Kontrolle – bitte nicht brechen","Crowd control on moon - do not break it"] },
+      { k: ["CC","CC"],         s: S.mond,   marke: ["Mond","Moon"], t: ["Mond ist im CC – bitte nicht brechen","Crowd control on moon - do not break it"] },
       { k: ["CDs","CDs"],       s: S.ruf,    t: ["Meine Cooldowns sind bereit – los","My cooldowns are up - go"] },
       { k: ["Komme","OMW"],     s: S.pfeil,  ping: ["Bin unterwegs","On my way"], t: ["Bin unterwegs","On my way"] },
       { k: ["Adds","Adds"],     s: S.adds,   ping: ["Warnung","Warning"], t: ["Adds kommen auf meiner Seite","Adds incoming on my side"] },
-      { k: ["Halt","Hold"],     s: S.uhr,    t: ["Meine Cooldowns sind unten – kurz halten","My cooldowns are down - hold a moment"] }
+      { k: ["Halt","Hold"],     s: S.uhr,    t: ["Meine Cooldowns sind noch nicht bereit – kurz halten","My cooldowns are down - hold a moment"] }
     ]
   };
 
@@ -643,7 +643,7 @@ footer a { color: var(--ink-leise); }
 
     var aktiv = liste[gewaehlt] || liste[0];
 
-    /* Der Kanal: auf der Seite immer der Fall, der im Schluesselstein gilt. */
+    /* Der Kanal: auf der Seite immer der Fall, der im Key gilt. */
     chatzeile.innerHTML =
       '<span class="kanal">[' + (i ? "Instance" : "Instanz") + "] </span>" +
       fuellen(aktiv.t[i], i);

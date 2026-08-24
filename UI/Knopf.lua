@@ -82,7 +82,7 @@ local function beiKlick(rahmen, taste)
     local knopf = rahmen.daten
     if not knopf then return end
 
-    -- Umschalt-Klick oeffnet den Editor bei genau diesem Knopf. Das ist der
+    -- Shift-Klick oeffnet den Editor bei genau diesem Knopf. Das ist der
     -- kuerzeste Weg von "der Text stimmt nicht mehr" zu "geaendert".
     if IsShiftKeyDown() then
         TCD.Editor:Oeffnen(rahmen.index)

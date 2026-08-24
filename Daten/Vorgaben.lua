@@ -26,7 +26,7 @@
 --
 -- Der Kanal fehlt mit Absicht: Alle Vorgaben laufen auf "AUTO". Die eine
 -- Taste soll im Schluesselstein in den Instanzchat gehen und im Schlachtzug
--- in den Schlachtzugschat, ohne dass man zwei Knoepfe dafuer braucht.
+-- in den Raidchat, ohne dass man zwei Knoepfe dafuer braucht.
 -- ===========================================================================
 local addonName, TCD = ...
 
