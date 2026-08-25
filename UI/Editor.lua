@@ -11,15 +11,22 @@
 --   UIPanelButtonTemplate ... 135      OptionsSliderTemplate ..... 1
 --   InputBoxTemplate ......... 56      UIDropDownMenuTemplate ... 32 (veraltet)
 --
--- Was breit benutzt wird, verschwindet nicht ueber Nacht - das wird hier
--- benutzt. Was kaum noch jemand anfasst (Schieberegler) oder was Blizzard
--- ausdruecklich abgeloest hat (das alte Aufklappmenue), ist hier selbst
--- gebaut: ein Zahlenfeld mit zwei Schrittknoepfen statt eines Reglers, eine
--- eigene Auswahlliste statt UIDropDownMenu, eine eigene Liste mit Mausrad
--- statt eines Scrollrahmens.
+-- Bis Fassung 1.0 hat dieses Fenster die drei oberen benutzt und nur die
+-- unteren selbst gebaut. Das war ein Kompromiss - und man hat ihn gesehen:
+-- Blizzards Knopf bringt gelbe Schrift auf rotbraunem Metall mit, das
+-- Eingabefeld einen goldenen Rahmen, der Kontrollkasten einen dritten Stil.
+-- Auf einer dunkelblauen Flaeche standen damit drei fremde Handschriften
+-- nebeneinander, jede in ihrer eigenen Aufloesung skaliert.
 --
--- Das kostet etwa 150 Zeilen und spart den Tag, an dem eine Vorlage
--- verschwindet und das Addon beim Oeffnen des Editors einen Fehler wirft.
+-- Seit 1.1.0 baut dieses Fenster ALLE seine Bausteine selbst, auf der Palette
+-- und der Pixelrechnung aus UI\Stil.lua. Der Gewinn ist doppelt: ein
+-- einheitliches Bild, und Raender, die auf einen echten Bildschirmpunkt
+-- fallen statt ueber zwei zu verschmieren (die lange Begruendung steht im
+-- Kopf von UI\Stil.lua).
+--
+-- Der Preis sind rund 200 Zeilen Bausteine. Dafuer gibt es keinen Tag mehr,
+-- an dem eine Vorlage verschwindet und der Editor beim Oeffnen einen Fehler
+-- wirft - und keinen, an dem Blizzard seine Knopffarbe aendert.
 -- ===========================================================================
 local addonName, TCD = ...
 
@@ -27,42 +34,100 @@ TCD.Editor = {}
 local E = TCD.Editor
 local L = TCD.L
 local S = TCD.Speicher
+local St = TCD.Stil
+local F = St.FARBE
+local M = St.MASS
 
 local fenster           -- der Hauptrahmen
 local gewaehlt = 1      -- welcher Knopf gerade bearbeitet wird
 local versatz  = 0      -- erste sichtbare Zeile der Liste
 local felder   = {}     -- die Eingabefelder des Formulars
 local zeilen   = {}     -- die Zeilen der Knopfliste
-local schalter = {}     -- die Kontrollkaesten des Leisten-Reiters
+local schalter = {}     -- die Bedienelemente des Leisten-Reiters
 local reiterAktiv = "BUTTONS"
 
 local ZEILEN_SICHTBAR = 11
-local ZEILEN_HOEHE    = 24
+local ZEILEN_HOEHE    = M.zeile
+local LISTE_BREITE    = 236
+local FORM_X          = 276
+local FORM_BREITE     = 356
 
 -- ===========================================================================
 -- BAUSTEINE
 -- ===========================================================================
 
--- Eine Ueberschrift.
--- Eine Ueberschrift oder Feldbeschriftung.
---
--- Vorgabe ist bewusst GameFontHighlightSmall (weiss) und nicht
--- GameFontNormalSmall (gelb): Der Editor ist dunkelblau, und Gelb darauf
--- ermuedet beim Lesen von zwei Dutzend Beschriftungen. Wer ausdruecklich eine
--- andere Schriftart uebergibt, bekommt sie.
-local function beschriftung(eltern, text, schriftart)
-    local fs = eltern:CreateFontString(nil, "OVERLAY", schriftart or "GameFontHighlightSmall")
-    fs:SetText(text)
-    return fs
+-- ---------------------------------------------------------------------------
+-- Eine Beschriftung
+-- ---------------------------------------------------------------------------
+local function beschriftung(eltern, text, schriftObjekt)
+    return St.Text(eltern, text, schriftObjekt or St.Klein)
 end
 
--- Ein einzeiliges Eingabefeld.
+-- ---------------------------------------------------------------------------
+-- Ein Knopf
+-- ---------------------------------------------------------------------------
+-- Drei Zustaende, alle ueber die Palette: ruhend, unter der Maus, gedrueckt.
+-- "art" waehlt den Ton - "warnung" ist fuer den einen Knopf gedacht, der
+-- eigene Texte kostet (Vorgaben wiederherstellen).
+--
+-- Der Text sitzt in einem Font-OBJEKT und nicht ueber SetTextColor: So bleibt
+-- er weiss, egal was der Rahmen darunter gerade tut.
+local function knopf(eltern, text, breite, beiKlick, art)
+    local b = CreateFrame("Button", nil, eltern)
+    b:SetSize(breite, M.knopf)
+
+    local grund = art == "warnung" and F.akzentTief or F.flaeche
+    local hell  = art == "warnung" and F.warnung or F.linieHell
+
+    St.Karte(b, { grund = grund, rand = F.linieHell, randAlpha = 0.5 })
+
+    b.text = St.Text(b, text, St.Klein)
+    b.text:SetPoint("CENTER", 0, 0)
+    b.text:SetJustifyH("CENTER")
+
+    b.grundfarbe = grund
+    b.hellfarbe  = hell
+
+    b:SetScript("OnEnter", function(self)
+        if not self:IsEnabled() then return end
+        St.Faerben(self, self.hellfarbe, F.akzent, 0.85, 0.9)
+    end)
+    b:SetScript("OnLeave", function(self)
+        St.Faerben(self, self.grundfarbe, F.linieHell, 1, 0.5)
+    end)
+    b:SetScript("OnMouseDown", function(self)
+        if not self:IsEnabled() then return end
+        self.text:SetPoint("CENTER", 0, -1)
+    end)
+    b:SetScript("OnMouseUp", function(self)
+        self.text:SetPoint("CENTER", 0, 0)
+    end)
+    b:SetScript("OnClick", beiKlick)
+
+    return b
+end
+
+-- ---------------------------------------------------------------------------
+-- Ein einzeiliges Eingabefeld
+-- ---------------------------------------------------------------------------
+-- Der Rand wechselt bei Fokus auf den Akzent. Das ist die einzige Rueckmeldung
+-- darueber, wo die Tastatur gerade hingeht - ohne sie tippt man in das
+-- falsche Feld und merkt es erst am Ergebnis.
 local function eingabe(eltern, breite, hoehe)
-    local box = CreateFrame("EditBox", nil, eltern, "InputBoxTemplate")
-    box:SetSize(breite, hoehe or 22)
+    local box = CreateFrame("EditBox", nil, eltern)
+    box:SetSize(breite, hoehe or M.feld)
     box:SetAutoFocus(false)
-    box:SetFontObject("ChatFontNormal")
-    box:SetTextInsets(4, 4, 0, 0)
+    box:SetFontObject(St.Normal)
+    box:SetTextInsets(7, 7, 0, 0)
+
+    St.Karte(box, { grund = F.feld, rand = F.linie })
+
+    box:SetScript("OnEditFocusGained", function(self)
+        St.Faerben(self, F.feldHell, F.akzent)
+    end)
+    box:SetScript("OnEditFocusLost", function(self)
+        St.Faerben(self, F.feld, F.linie)
+    end)
 
     -- Escape gibt den Fokus frei, statt das Fenster zu schliessen. Wer
     -- mitten in einem Text steckt, will nicht bei jedem Vertipper von vorn
@@ -73,35 +138,73 @@ local function eingabe(eltern, breite, hoehe)
     return box
 end
 
--- Ein Kontrollkasten mit Beschriftung rechts daneben.
-local function kasten(eltern, text, beiAenderung)
-    local k = CreateFrame("CheckButton", nil, eltern, "UICheckButtonTemplate")
-    k:SetSize(22, 22)
-    k.text = k:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
-    k.text:SetPoint("LEFT", k, "RIGHT", 2, 0)
-    k.text:SetText(text)
-    k:SetScript("OnClick", function(self) beiAenderung(self:GetChecked() and true or false) end)
-    return k
+-- Damit ein Feld sowohl den Fokusrand zuruecksetzt als auch die Aenderung
+-- uebernimmt: OnEditFocusLost gibt es nur einmal je Rahmen.
+local function beiFokusVerlust(box, was)
+    box:SetScript("OnEditFocusLost", function(self)
+        St.Faerben(self, F.feld, F.linie)
+        was(self)
+    end)
 end
 
--- Ein normaler Knopf.
---
--- UIPanelButtonTemplate bringt gelbe Schrift mit. Auf dem rotbraunen
--- Knopfhintergrund sind das zwei warme Farben aehnlicher Helligkeit - im
--- Spiel war das schlecht zu lesen. Weiss trennt sauber, ohne dass der Knopf
--- aufhoert, wie ein Blizzard-Knopf auszusehen.
---
--- Ueber die Font-OBJEKTE und nicht ueber SetTextColor: Blizzard setzt die
--- Farbe bei Hover und Klick sonst wieder auf ihren eigenen Wert zurueck.
-local function knopf(eltern, text, breite, beiKlick)
-    local b = CreateFrame("Button", nil, eltern, "UIPanelButtonTemplate")
-    b:SetSize(breite, 22)
-    b:SetNormalFontObject("GameFontHighlightSmall")
-    b:SetHighlightFontObject("GameFontHighlightSmall")
-    b:SetDisabledFontObject("GameFontDisableSmall")
-    b:SetText(text)
-    b:SetScript("OnClick", beiKlick)
-    return b
+-- ---------------------------------------------------------------------------
+-- Ein Kontrollkasten
+-- ---------------------------------------------------------------------------
+-- Selbst gebaut, weil UICheckButtonTemplate seinen eigenen Metallrahmen
+-- mitbringt. Gefuellt heisst hier wirklich gefuellt: ein Kasten in der
+-- Akzentfarbe mit weissem Haken - das erkennt man auch aus dem Augenwinkel,
+-- waehrend Blizzards duennes Haekchen auf dunklem Grund verschwindet.
+local function kasten(eltern, text, beiAenderung)
+    local k = CreateFrame("Button", nil, eltern)
+    k:SetSize(18, 18)
+
+    St.Karte(k, { grund = F.feld, rand = F.linieHell, randAlpha = 0.7 })
+
+    k.haken = St.Scharf(k:CreateTexture(nil, "ARTWORK"))
+    k.haken:SetTexture("Interface\\Buttons\\UI-CheckBox-Check")
+    k.haken:SetPoint("TOPLEFT", -3, 3)
+    k.haken:SetPoint("BOTTOMRIGHT", 3, -3)
+    k.haken:SetVertexColor(1, 1, 1)
+    k.haken:Hide()
+
+    -- Der Text traegt den Klick mit: Ein 18 Punkte grosses Kaestchen ist ein
+    -- kleines Ziel, die Beschriftung daneben ein grosses.
+    k.text = St.Text(k, text, St.Klein)
+    k.text:SetPoint("LEFT", k, "RIGHT", M.eng, 0)
+    k.text:SetWidth(300)
+
+    local fang = CreateFrame("Button", nil, eltern)
+    fang:SetPoint("TOPLEFT", k, "TOPLEFT", 0, 0)
+    fang:SetPoint("BOTTOMRIGHT", k.text, "BOTTOMRIGHT", 0, 0)
+
+    k.wert = false
+
+    function k:SetChecked(an)
+        self.wert = an and true or false
+        self.haken:SetShown(self.wert)
+        St.Faerben(self, self.wert and F.akzentTief or F.feld,
+                         self.wert and F.akzent or F.linieHell,
+                         1, self.wert and 1 or 0.7)
+    end
+
+    function k:GetChecked() return self.wert end
+
+    local function umschalten()
+        k:SetChecked(not k.wert)
+        beiAenderung(k.wert)
+    end
+
+    k:SetScript("OnClick", umschalten)
+    fang:SetScript("OnClick", umschalten)
+
+    fang:SetScript("OnEnter", function()
+        if not k.wert then St.Faerben(k, F.feldHell, F.akzent, 1, 0.8) end
+    end)
+    fang:SetScript("OnLeave", function()
+        if not k.wert then St.Faerben(k, F.feld, F.linieHell, 1, 0.7) end
+    end)
+
+    return k
 end
 
 -- ---------------------------------------------------------------------------
@@ -110,19 +213,25 @@ end
 -- Ersetzt den Schieberegler. Zwei Vorteile ausser der Patchfestigkeit: Man
 -- kann einen Wert genau eintippen statt ihn zu treffen, und man sieht ihn
 -- immer als Zahl - bei einem Regler muss man dafuer den Griff anfassen.
+--
+-- Das Mausrad geht ebenfalls: ueber dem Feld drehen aendert den Wert. Das ist
+-- die schnellste Art, Knopfgroesse oder Deckkraft zu suchen, weil man dabei
+-- auf die Leiste sehen kann statt auf das Feld.
 local function zahlenfeld(eltern, text, min, max, schritt, holen, setzen)
     local halter = CreateFrame("Frame", nil, eltern)
-    halter:SetSize(210, 24)
+    halter:SetSize(232, M.feld)
 
-    local titel = beschriftung(halter, text)
+    local titel = beschriftung(halter, text, St.Leise)
     titel:SetPoint("LEFT", 0, 0)
-    titel:SetWidth(120)
+    titel:SetWidth(130)
     titel:SetJustifyH("LEFT")
 
-    local box = eingabe(halter, 44, 20)
-    box:SetPoint("LEFT", halter, "LEFT", 124, 0)
+    local box = eingabe(halter, 52, 22)
+    box:SetPoint("LEFT", halter, "LEFT", 134, 0)
     box:SetNumeric(false)   -- Kommazahlen (Deckkraft, Skalierung) sollen gehen
     box:SetJustifyH("CENTER")
+    box:SetTextInsets(2, 2, 0, 0)
+    box:SetFontObject(St.Wert)
 
     local function anzeigen()
         local wert = holen()
@@ -149,90 +258,135 @@ local function zahlenfeld(eltern, text, min, max, schritt, holen, setzen)
         uebernehmen(tonumber(self:GetText()))
     end)
     box:SetScript("OnEscapePressed", function(self) self:ClearFocus() anzeigen() end)
+    beiFokusVerlust(box, function(self) uebernehmen(tonumber(self:GetText())) end)
+
+    box:EnableMouseWheel(true)
+    box:SetScript("OnMouseWheel", function(_, richtung)
+        uebernehmen(holen() + richtung * schritt)
+    end)
 
     local runter = knopf(halter, "-", 22, function() uebernehmen(holen() - schritt) end)
-    runter:SetPoint("LEFT", box, "RIGHT", 4, 0)
+    runter:SetPoint("LEFT", box, "RIGHT", M.winzig, 0)
+    runter:SetHeight(22)
 
     local hoch = knopf(halter, "+", 22, function() uebernehmen(holen() + schritt) end)
     hoch:SetPoint("LEFT", runter, "RIGHT", 2, 0)
+    hoch:SetHeight(22)
 
     halter.Auffrischen = anzeigen
     return halter
 end
 
--- ---------------------------------------------------------------------------
+-- ===========================================================================
 -- Eine eigene Auswahlliste
--- ---------------------------------------------------------------------------
+-- ===========================================================================
 -- Ersatz fuer UIDropDownMenu. Der Knopf zeigt den aktuellen Wert; ein Klick
 -- klappt die Liste darunter auf.
 --
--- ZUR LESBARKEIT: Anfangs steckte hier UIPanelButtonTemplate - Blizzards
--- Standardknopf. Der bringt gelben Text auf rotbraunem Grund mit, und im
--- Spiel war das auf dem dunkelblauen Editor kaum zu entziffern: zwei warme
--- Farben mit aehnlicher Helligkeit, dazu die kleine Schrift.
+-- ---------------------------------------------------------------------------
+-- WARUM DIE AUFGEKLAPPTE LISTE 1.1.0 NEU GEBAUT WURDE
+-- ---------------------------------------------------------------------------
+-- In 1.0 war sie im Spiel schlecht zu lesen, und die Ursache war NICHT die
+-- Farbe - der Grund stand schon auf 0.98 Deckkraft. Es waren zwei andere
+-- Dinge, die sich zu demselben Eindruck addiert haben:
 --
--- Jetzt ist es ein eigener Rahmen: dunkler Grund, WEISSER Text in normaler
--- Groesse, heller Rand. Das ist derselbe Kontrast wie bei den Eingabefeldern
--- daneben - die Auswahl sieht damit aus wie das, was sie ist, naemlich ein
--- Feld und kein Knopf.
+--   1. Die Liste lag in derselben Ebene (DIALOG) wie das Fenster. Innerhalb
+--      einer Ebene entscheidet der Rahmen-LEVEL, und den bekam sie vom
+--      Formular vererbt - also einen NIEDRIGEREN als die Eingabefelder, ueber
+--      die sie sich legt. WoW hat die Felder folglich UEBER die Liste
+--      gezeichnet. Was wie ein durchsichtiger Hintergrund aussah, waren in
+--      Wahrheit fremde Widgets, die durch sie hindurchstachen.
+--
+--   2. Das Backdrop darunter war halbdurchsichtig, und der Editor selbst ist
+--      es auch. Zwei mal "fast undurchsichtig" uebereinander lassen den
+--      Spielhintergrund immer noch durch.
+--
+-- Beides ist jetzt anders: eine eigene, HOEHERE Ebene (FULLSCREEN_DIALOG) mit
+-- SetToplevel, ein voellig undurchsichtiger Grund, ein Schlagschatten, damit
+-- man sieht, dass die Liste DAVOR liegt, und Zeilen, die hoch genug sind, um
+-- die Zielmarkierungs-Symbole in voller Groesse zu zeigen.
 --
 -- eintraege: Liste von { wert = ..., text = "..." }
-local AUSWAHL_ZEILE = 22
+local AUSWAHL_ZEILE   = 24
+local AUSWAHL_SICHTBAR = 12
+
+-- Es darf immer nur EINE Liste offen sein. Ohne diese Merkstelle bleibt beim
+-- Wechsel von "Kanal" zu "Markierung" die erste stehen und verdeckt die zweite.
+local offeneListe
+
+local function alleZuklappen()
+    if offeneListe then
+        offeneListe:Hide()
+        offeneListe = nil
+    end
+end
 
 local function auswahl(eltern, breite, eintraege, holen, setzen)
     local halter = CreateFrame("Frame", nil, eltern)
-    halter:SetSize(breite, 24)
+    halter:SetSize(breite, M.feld)
 
-    -- Das Anzeigefeld.
-    local anzeige = CreateFrame("Button", nil, halter, "BackdropTemplate")
+    -- -----------------------------------------------------------------
+    -- Das Anzeigefeld
+    -- -----------------------------------------------------------------
+    -- Sieht aus wie ein Eingabefeld daneben, weil es dasselbe IST: ein Feld,
+    -- das einen Wert haelt. Nur der Pfeil sagt, dass man ihn nicht tippt,
+    -- sondern waehlt.
+    local anzeige = CreateFrame("Button", nil, halter)
     anzeige:SetAllPoints()
-    anzeige:SetBackdrop({
-        bgFile   = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        edgeSize = 1,
-    })
-    anzeige:SetBackdropColor(0.10, 0.14, 0.19, 1)
-    anzeige:SetBackdropBorderColor(0.32, 0.42, 0.52, 1)
+    St.Karte(anzeige, { grund = F.feld, rand = F.linie })
 
-    anzeige.text = anzeige:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    anzeige.text = St.Text(anzeige, nil, St.Normal)
     anzeige.text:SetPoint("LEFT", 7, 0)
-    anzeige.text:SetPoint("RIGHT", -22, 0)
+    anzeige.text:SetPoint("RIGHT", -24, 0)
     anzeige.text:SetJustifyH("LEFT")
     anzeige.text:SetWordWrap(false)
-    anzeige.text:SetTextColor(1, 1, 1)
 
-    -- Der Pfeil sagt, dass sich hier etwas aufklappt. Ohne ihn sieht das
-    -- Feld aus wie ein Textfeld, in das man tippen koennte.
-    local pfeil = anzeige:CreateTexture(nil, "OVERLAY")
-    pfeil:SetTexture("Interface\\ChatFrame\\UI-ChatIcon-ScrollDown-Up")
-    pfeil:SetSize(16, 16)
-    pfeil:SetPoint("RIGHT", -4, 0)
-    pfeil:SetVertexColor(0.75, 0.85, 0.95)
+    -- Der Pfeil ist selbst gezeichnet: drei uebereinanderliegende Striche,
+    -- die nach unten schmaler werden. Blizzards Pfeiltexturen sind je nach
+    -- Herkunft blau, gold oder grau eingefaerbt und haben alle einen Rahmen
+    -- mitgebracht, der auf dieser Flaeche fremd aussah.
+    local pfeil = CreateFrame("Frame", nil, anzeige)
+    pfeil:SetSize(10, 6)
+    pfeil:SetPoint("RIGHT", -8, 0)
 
-    anzeige:SetScript("OnEnter", function(self)
-        self:SetBackdropColor(0.16, 0.22, 0.30, 1)
-        self:SetBackdropBorderColor(0.45, 0.65, 0.85, 1)
-    end)
-    anzeige:SetScript("OnLeave", function(self)
-        self:SetBackdropColor(0.10, 0.14, 0.19, 1)
-        self:SetBackdropBorderColor(0.32, 0.42, 0.52, 1)
-    end)
+    pfeil.striche = {}
+    for i = 1, 3 do
+        local t = St.Scharf(pfeil:CreateTexture(nil, "OVERLAY"))
+        t:SetColorTexture(St.Ent(F.textLeise))
+        t:SetPoint("TOP", pfeil, "TOP", 0, -(i - 1) * 2)
+        t:SetSize(10 - (i - 1) * 3, 2)
+        pfeil.striche[i] = t
+    end
 
-    -- Die aufgeklappte Liste.
-    local liste = CreateFrame("Frame", nil, halter, "BackdropTemplate")
-    liste:SetPoint("TOPLEFT", anzeige, "BOTTOMLEFT", 0, -2)
+    local function pfeilFaerben(farbe)
+        for _, t in ipairs(pfeil.striche) do
+            t:SetColorTexture(St.Ent(farbe))
+        end
+    end
+
+    -- -----------------------------------------------------------------
+    -- Die aufgeklappte Liste
+    -- -----------------------------------------------------------------
+    local sichtbar = math.min(#eintraege, AUSWAHL_SICHTBAR)
+
+    local liste = CreateFrame("Frame", nil, halter)
     liste:SetWidth(breite)
-    liste:SetFrameStrata("DIALOG")
-    liste:SetBackdrop({
-        bgFile   = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        edgeSize = 1,
-    })
-    -- Fast undurchsichtig: Eine halbdurchsichtige Liste laesst den Text
-    -- dahinter durchscheinen, und dann liest man beides nicht mehr.
-    liste:SetBackdropColor(0.06, 0.09, 0.13, 0.98)
-    liste:SetBackdropBorderColor(0.45, 0.60, 0.75, 1)
+    liste:SetHeight(sichtbar * AUSWAHL_ZEILE + 2)
+
+    -- Der ganze Grund, warum die Liste in 1.0 durchsichtig WIRKTE: eine
+    -- eigene, hoehere Ebene. Damit ist sie ueber jedem Feld des Formulars,
+    -- unabhaengig davon, in welcher Reihenfolge die Rahmen entstanden sind.
+    liste:SetFrameStrata("FULLSCREEN_DIALOG")
+    liste:SetToplevel(true)
+    liste:EnableMouse(true)
     liste:Hide()
+
+    -- Voellig undurchsichtig. Eine Auswahlliste ist kein Fenster, durch das
+    -- man etwas sehen soll - sie liegt fuer zwei Sekunden da und geht wieder.
+    St.Karte(liste, { grund = F.kopf, grundAlpha = 1, rand = F.linieHell, randAlpha = 1 })
+    St.Schatten(liste, 5)
+
+    local listenVersatz = 0
 
     local function text_zu(wert)
         for _, e in ipairs(eintraege) do
@@ -241,63 +395,115 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
         return tostring(wert)
     end
 
-    local zeilen_rahmen = {}
+    local zeilenRahmen = {}
+    local anzeigen
 
-    local function anzeigen()
+    local function listeAuffrischen()
+        local maxVersatz = math.max(0, #eintraege - sichtbar)
+        if listenVersatz > maxVersatz then listenVersatz = maxVersatz end
+        if listenVersatz < 0 then listenVersatz = 0 end
+
         local jetzt = holen()
-        anzeige.text:SetText(text_zu(jetzt))
 
-        -- Der aktive Eintrag wird in der Liste hervorgehoben. Ohne das muss
-        -- man beim Aufklappen erst suchen, was gerade eingestellt ist.
-        for _, z in ipairs(zeilen_rahmen) do
-            if z.wert == jetzt then
-                z.grund:SetColorTexture(0.20, 0.50, 0.75, 0.55)
-                z.text:SetTextColor(1, 1, 1)
+        for i = 1, sichtbar do
+            local z = zeilenRahmen[i]
+            local e = eintraege[i + listenVersatz]
+
+            if e then
+                z.wert = e.wert
+                z.text:SetText(e.text)
+
+                -- Der aktive Eintrag wird hervorgehoben. Ohne das muss man
+                -- beim Aufklappen erst suchen, was gerade eingestellt ist.
+                if e.wert == jetzt then
+                    z.grund:SetColorTexture(St.Ent(F.akzent, 0.85))
+                    z.text:SetFontObject(St.Normal)
+                    z.marke:Show()
+                else
+                    z.grund:SetColorTexture(0, 0, 0, 0)
+                    z.text:SetFontObject(St.Normal)
+                    z.marke:Hide()
+                end
+
+                z:Show()
             else
-                z.grund:SetColorTexture(0, 0, 0, 0)
-                z.text:SetTextColor(0.88, 0.90, 0.93)
+                z:Hide()
             end
         end
     end
 
-    local function zuklappen()
-        liste:Hide()
-    end
+    for i = 1, sichtbar do
+        local z = CreateFrame("Button", nil, liste)
+        z:SetSize(breite - 2, AUSWAHL_ZEILE)
+        z:SetPoint("TOPLEFT", 1, -((i - 1) * AUSWAHL_ZEILE) - 1)
 
-    for i, e in ipairs(eintraege) do
-        local zeile = CreateFrame("Button", nil, liste)
-        zeile:SetSize(breite - 2, AUSWAHL_ZEILE)
-        zeile:SetPoint("TOPLEFT", 1, -((i - 1) * AUSWAHL_ZEILE) - 1)
-        zeile.wert = e.wert
+        z.grund = St.Scharf(z:CreateTexture(nil, "BACKGROUND"))
+        z.grund:SetAllPoints()
 
-        zeile.grund = zeile:CreateTexture(nil, "BACKGROUND")
-        zeile.grund:SetAllPoints()
+        z.hell = St.Scharf(z:CreateTexture(nil, "HIGHLIGHT"))
+        z.hell:SetAllPoints()
+        z.hell:SetColorTexture(1, 1, 1, 0.14)
 
-        zeile.hell = zeile:CreateTexture(nil, "HIGHLIGHT")
-        zeile.hell:SetAllPoints()
-        zeile.hell:SetColorTexture(1, 1, 1, 0.16)
+        -- Ein schmaler Balken links am aktiven Eintrag. Die Flaechenfarbe
+        -- allein traegt nicht, wenn die Zeile ein helles Symbol enthaelt.
+        z.marke = St.Scharf(z:CreateTexture(nil, "ARTWORK"))
+        z.marke:SetPoint("TOPLEFT", 0, 0)
+        z.marke:SetPoint("BOTTOMLEFT", 0, 0)
+        z.marke:SetWidth(3)
+        z.marke:SetColorTexture(St.Ent(F.weiss, 0.9))
+        z.marke:Hide()
 
-        zeile.text = zeile:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-        zeile.text:SetPoint("LEFT", 7, 0)
-        zeile.text:SetPoint("RIGHT", -5, 0)
-        zeile.text:SetJustifyH("LEFT")
-        zeile.text:SetWordWrap(false)
-        zeile.text:SetText(e.text)
+        z.text = St.Text(z, nil, St.Normal)
+        z.text:SetPoint("LEFT", 9, 0)
+        z.text:SetPoint("RIGHT", -6, 0)
+        z.text:SetJustifyH("LEFT")
+        z.text:SetWordWrap(false)
 
-        zeile:SetScript("OnClick", function()
-            setzen(e.wert)
+        z:SetScript("OnClick", function(self)
+            setzen(self.wert)
             anzeigen()
-            zuklappen()
+            alleZuklappen()
         end)
 
-        zeilen_rahmen[i] = zeile
+        zeilenRahmen[i] = z
     end
 
-    liste:SetHeight(#eintraege * AUSWAHL_ZEILE + 2)
+    -- Mausrad, falls ein Client mehr Eintraege meldet als Platz ist. Bei den
+    -- neun Zielmarkierungen greift das nie - bei einer Ping-Liste, die
+    -- Blizzard eines Tages erweitert, schon.
+    if #eintraege > sichtbar then
+        liste:EnableMouseWheel(true)
+        liste:SetScript("OnMouseWheel", function(_, richtung)
+            listenVersatz = listenVersatz - richtung
+            listeAuffrischen()
+        end)
+    end
 
-    -- ---------------------------------------------------------------------
+    anzeigen = function()
+        anzeige.text:SetText(text_zu(holen()))
+        listeAuffrischen()
+    end
+
+    local function zuklappen()
+        if offeneListe == liste then offeneListe = nil end
+        liste:Hide()
+        pfeilFaerben(F.textLeise)
+        St.Faerben(anzeige, F.feld, F.linie)
+    end
+
+    anzeige:SetScript("OnEnter", function(self)
+        St.Faerben(self, F.feldHell, F.linieHell)
+        pfeilFaerben(F.text)
+    end)
+    anzeige:SetScript("OnLeave", function(self)
+        if liste:IsShown() then return end
+        St.Faerben(self, F.feld, F.linie)
+        pfeilFaerben(F.textLeise)
+    end)
+
+    -- -----------------------------------------------------------------
     -- Aufklappen - nach unten, wenn Platz ist, sonst nach oben
-    -- ---------------------------------------------------------------------
+    -- -----------------------------------------------------------------
     -- Die Markierungsliste hat neun Eintraege. Weiter unten im Formular
     -- reicht der Platz darunter nicht mehr, und die Liste haengt halb unter
     -- dem Bildschirmrand - man waehlt dann blind. Deshalb wird bei jedem
@@ -307,18 +513,26 @@ local function auswahl(eltern, breite, eintraege, holen, setzen)
     -- Fenster laesst sich verschieben, und was am unteren Bildschirmrand
     -- keinen Platz hat, hat ihn in der Bildschirmmitte sehr wohl.
     anzeige:SetScript("OnClick", function(self)
-        if liste:IsShown() then zuklappen() return end
+        if liste:IsShown() then alleZuklappen() return end
+
+        alleZuklappen()
+        listenVersatz = 0
+        listeAuffrischen()
 
         liste:ClearAllPoints()
 
         local unten = self:GetBottom()
-        if unten and (unten - liste:GetHeight() - 2) < 0 then
-            liste:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 2)
+        if unten and (unten - liste:GetHeight() - 3) < 0 then
+            liste:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 3)
         else
-            liste:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -2)
+            liste:SetPoint("TOPLEFT", self, "BOTTOMLEFT", 0, -3)
         end
 
         liste:Show()
+        offeneListe = liste
+
+        St.Faerben(self, F.feldHell, F.akzent)
+        pfeilFaerben(F.akzent)
     end)
 
     halter.Auffrischen = anzeigen
@@ -344,10 +558,11 @@ local function markeEintraege()
     local liste = { { wert = 0, text = L.MARK_NONE } }
     for i = 1, 8 do
         -- Das Symbol steht mit im Text: In einer Liste aus acht Wortmarken
-        -- sucht man sonst "Kreuz" statt es zu sehen.
+        -- sucht man sonst "Kreuz" statt es zu sehen. 16 statt 14 Punkte, weil
+        -- die Zeile seit 1.1.0 hoch genug dafuer ist.
         liste[#liste + 1] = {
             wert = i,
-            text = format("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_%d:14|t %s", i, L["MARK_" .. i]),
+            text = format("|TInterface\\TargetingFrame\\UI-RaidTargetingIcon_%d:16|t %s", i, L["MARK_" .. i]),
         }
     end
     return liste
@@ -410,13 +625,31 @@ local function listeAuffrischen()
 
         if eintrag then
             zeile.index = index
-            zeile.symbol:SetTexture(eintrag.symbol)
-            zeile.text:SetText(format("%d. %s", index, eintrag.beschriftung ~= "" and eintrag.beschriftung or "-"))
+
+            local symbol = eintrag.symbol or "Interface\\Icons\\INV_Misc_QuestionMark"
+            zeile.symbol:SetTexture(symbol)
+
+            -- Denselben Zuschnitt wie die Leiste. Vorher stand hier ein fest
+            -- verdrahtetes 0.08..0.92, das auch die Zielmarkierungen
+            -- beschnitten hat - in der Liste sahen sie damit anders aus als
+            -- auf dem Knopf, den sie darstellen.
+            if TCD.Knopf.BrauchtZuschnitt(symbol) then
+                zeile.symbol:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            else
+                zeile.symbol:SetTexCoord(0, 1, 0, 1)
+            end
+
+            zeile.nummer:SetText(tostring(index))
+            zeile.text:SetText(eintrag.beschriftung ~= "" and eintrag.beschriftung or L.CFG_NEW_LABEL)
 
             if index == gewaehlt then
-                zeile.grund:SetColorTexture(0.20, 0.60, 0.85, 0.55)
+                zeile.grund:SetColorTexture(St.Ent(F.akzent, 0.30))
+                zeile.marke:Show()
+                zeile.text:SetFontObject(St.Normal)
             else
                 zeile.grund:SetColorTexture(0, 0, 0, 0)
+                zeile.marke:Hide()
+                zeile.text:SetFontObject(St.Leise)
             end
 
             zeile:Show()
@@ -426,6 +659,12 @@ local function listeAuffrischen()
     end
 
     fenster.leerHinweis:SetShown(anzahl == 0)
+
+    -- Der Zaehler ueber der Liste. Bei elf sichtbaren Zeilen und mehr
+    -- Knoepfen ist sonst nicht zu sehen, dass da noch etwas kommt.
+    fenster.listenZahl:SetText(anzahl > ZEILEN_SICHTBAR
+        and format("%d-%d / %d", versatz + 1, math.min(anzahl, versatz + ZEILEN_SICHTBAR), anzahl)
+        or tostring(anzahl))
 end
 
 -- ===========================================================================
@@ -440,10 +679,14 @@ local function formularAuffrischen()
             if feld.Auffrischen then feld.Auffrischen() end
             feld:Hide()
         end
+        fenster.formTitel:Hide()
+        fenster.vorschauKarte:Hide()
         return
     end
 
     for _, feld in pairs(felder) do feld:Show() end
+    fenster.formTitel:Show()
+    fenster.vorschauKarte:Show()
 
     felder.beschriftung:SetText(eintrag.beschriftung or "")
     felder.beschriftung:SetCursorPosition(0)
@@ -479,18 +722,17 @@ end
 -- ===========================================================================
 local function reiterZeigen(welcher)
     reiterAktiv = welcher
+    alleZuklappen()
 
     fenster.bereichKnoepfe:SetShown(welcher == "BUTTONS")
     fenster.bereichLayout:SetShown(welcher == "LAYOUT")
 
+    -- Der aktive Reiter traegt einen Akzentstrich UNTER sich, nicht eine
+    -- gefuellte Flaeche. Das ist der Unterschied zwischen einem Reiter und
+    -- einem Knopf, und man erkennt ihn ohne hinzusehen.
     local function reiterFaerben(reiter, aktiv)
-        if aktiv then
-            reiter.grund:SetColorTexture(0.20, 0.60, 0.85, 0.85)
-            reiter.text:SetTextColor(1, 1, 1)
-        else
-            reiter.grund:SetColorTexture(0, 0, 0, 0.40)
-            reiter.text:SetTextColor(0.70, 0.75, 0.80)
-        end
+        reiter.strich:SetShown(aktiv)
+        reiter.text:SetFontObject(aktiv and St.Kopf or St.Leise)
     end
 
     reiterFaerben(fenster.reiterKnoepfe, welcher == "BUTTONS")
@@ -508,169 +750,254 @@ end
 local function fensterBauen()
     if fenster then return end
 
-    fenster = CreateFrame("Frame", "TacticalCalloutDockEditor", UIParent, "BackdropTemplate")
-    fenster:SetSize(620, 486)
+    fenster = CreateFrame("Frame", "TacticalCalloutDockEditor", UIParent)
+    fenster:SetSize(680, 524)
     fenster:SetPoint("CENTER")
     fenster:SetFrameStrata("DIALOG")
     fenster:SetMovable(true)
     fenster:EnableMouse(true)
-    fenster:RegisterForDrag("LeftButton")
-    fenster:SetScript("OnDragStart", fenster.StartMoving)
-    fenster:SetScript("OnDragStop", fenster.StopMovingOrSizing)
     fenster:SetClampedToScreen(true)
 
-    fenster:SetBackdrop({
-        bgFile   = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        edgeSize = 1,
-    })
-    fenster:SetBackdropColor(0.05, 0.07, 0.10, 0.96)
-    fenster:SetBackdropBorderColor(0.25, 0.35, 0.45, 1)
+    -- Fast undurchsichtig. Ein Editor ist kein Overlay: Wer hier Texte tippt,
+    -- soll den Text sehen und nicht die Wand dahinter. Die verbleibenden vier
+    -- Prozent halten nur den Eindruck aufrecht, dass ueber dem Spiel gearbeitet
+    -- wird und nicht in einem eigenen Programm.
+    St.Karte(fenster, { grund = F.grund, grundAlpha = 0.96, rand = F.linieHell, randAlpha = 0.8 })
+    St.Schatten(fenster, 6, 0.08)
 
     -- Escape schliesst das Fenster. UISpecialFrames verlangt den GLOBALEN
     -- Namen des Rahmens - ein lokaler Verweis reicht nicht.
     tinsert(UISpecialFrames, "TacticalCalloutDockEditor")
 
-    -- Ein Klick irgendwo im Fenster klappt offene Auswahllisten zu. Ohne das
-    -- bleibt eine Liste stehen, bis man sie noch einmal trifft.
-    fenster:SetScript("OnMouseDown", function()
-        for _, feld in pairs(felder) do
-            if feld.Zuklappen then feld.Zuklappen() end
-        end
-        for _, feld in pairs(schalter) do
-            if feld.Zuklappen then feld.Zuklappen() end
-        end
-    end)
+    -- Ein Klick irgendwo im Fenster klappt eine offene Auswahlliste zu. Ohne
+    -- das bleibt sie stehen, bis man sie noch einmal trifft.
+    fenster:SetScript("OnMouseDown", alleZuklappen)
 
     -- ---------------------------------------------------------------------
-    -- Kopf
+    -- Die Kopfzeile
     -- ---------------------------------------------------------------------
-    local titel = beschriftung(fenster, L.CFG_TITLE, "GameFontNormalLarge")
-    titel:SetPoint("TOPLEFT", 16, -14)
+    -- Ein eigener Streifen, kein blosser Text auf dem Grund. Er traegt das
+    -- Ziehen, den Titel, das aktive Profil und das Schliessen - vier Dinge,
+    -- die alle zum Fenster gehoeren und nicht zum Inhalt.
+    local kopf = CreateFrame("Frame", nil, fenster)
+    kopf:SetPoint("TOPLEFT", 0, 0)
+    kopf:SetPoint("TOPRIGHT", 0, 0)
+    kopf:SetHeight(M.kopf)
+    kopf:EnableMouse(true)
+    kopf:RegisterForDrag("LeftButton")
+    kopf:SetScript("OnDragStart", function() fenster:StartMoving() end)
+    kopf:SetScript("OnDragStop", function() fenster:StopMovingOrSizing() end)
+    kopf:SetScript("OnMouseDown", alleZuklappen)
 
-    local zu = knopf(fenster, L.CFG_CLOSE, 80, function() E:Schliessen() end)
-    zu:SetPoint("TOPRIGHT", -14, -12)
+    St.Flaeche(kopf, F.kopf, 1)
+
+    -- Der Akzentbalken links. Das einzige Stueck Farbe im Kopf - es macht aus
+    -- einem grauen Streifen eine Kopfzeile, und es kostet drei Zeilen.
+    local balken = St.Scharf(kopf:CreateTexture(nil, "ARTWORK"))
+    balken:SetPoint("TOPLEFT", 0, 0)
+    balken:SetPoint("BOTTOMLEFT", 0, 0)
+    balken:SetWidth(3)
+    balken:SetColorTexture(St.Ent(F.akzent))
+
+    local kopfLinie = St.Trennlinie(kopf, F.linieHell, 0.6)
+    kopfLinie:SetPoint("BOTTOMLEFT", 0, 0)
+    kopfLinie:SetPoint("BOTTOMRIGHT", 0, 0)
+
+    local titel = beschriftung(kopf, L.ADDON_NAME, St.Titel)
+    titel:SetPoint("LEFT", M.rand, 1)
+
+    local untertitel = beschriftung(kopf, L.CFG_SUBTITLE, St.Aus)
+    untertitel:SetPoint("LEFT", titel, "RIGHT", M.eng, 0)
 
     -- Das aktive Profil. Es steht hier und nicht nur an der Leiste, damit man
     -- beim Bearbeiten sieht, wessen Knoepfe man gerade vor sich hat.
-    fenster.profil = beschriftung(fenster, "", "GameFontHighlightSmall")
-    fenster.profil:SetPoint("TOPLEFT", 16, -38)
+    fenster.profil = beschriftung(kopf, "", St.Klein)
+    fenster.profil:SetJustifyH("RIGHT")
+
+    -- Das Schliessen-Kreuz.
+    --
+    -- UI-StopButton und nicht UIPanelCloseButton: Blizzards Schliessknopf
+    -- bringt einen goldenen Ring mit, der auf dieser Flaeche wie ein
+    -- Fremdkoerper sass. UI-StopButton ist das nackte Kreuz, das WoW selbst
+    -- in seinen Chateinstellungen benutzt - eine Textur, die es seit der
+    -- ersten Fassung des Spiels gibt und die sich einfaerben laesst.
+    local zu = CreateFrame("Button", nil, kopf)
+    zu:SetSize(26, 26)
+    zu:SetPoint("RIGHT", -M.eng, 0)
+
+    zu.kreuz = St.Scharf(zu:CreateTexture(nil, "OVERLAY"))
+    zu.kreuz:SetTexture("Interface\\Buttons\\UI-StopButton")
+    zu.kreuz:SetPoint("CENTER")
+    zu.kreuz:SetSize(12, 12)
+    zu.kreuz:SetVertexColor(St.Ent(F.textLeise))
+
+    -- Ein Rahmen, der nur unter der Maus erscheint. Ohne ihn ist die
+    -- Trefferflaeche unsichtbar, und man klickt zweimal daneben.
+    St.Karte(zu, { grund = F.kopf, grundAlpha = 0, rand = F.linie, randAlpha = 0 })
+
+    zu:SetScript("OnEnter", function(self)
+        self.kreuz:SetVertexColor(St.Ent(F.weiss))
+        St.Faerben(self, F.warnung, F.warnung, 0.85, 1)
+        GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+        GameTooltip:AddLine(L.CFG_CLOSE, 1, 1, 1)
+        GameTooltip:Show()
+    end)
+    zu:SetScript("OnLeave", function(self)
+        self.kreuz:SetVertexColor(St.Ent(F.textLeise))
+        St.Faerben(self, F.kopf, F.linie, 0, 0)
+        GameTooltip:Hide()
+    end)
+    zu:SetScript("OnClick", function() E:Schliessen() end)
+
+    fenster.profil:SetPoint("RIGHT", zu, "LEFT", -M.luft, 0)
 
     -- ---------------------------------------------------------------------
-    -- Reiter
+    -- Die Reiter
     -- ---------------------------------------------------------------------
     local function reiterBauen(text, x, welcher)
         local r = CreateFrame("Button", nil, fenster)
-        r:SetSize(110, 20)
-        r:SetPoint("TOPLEFT", x, -58)
+        r:SetSize(104, M.reiter)
+        r:SetPoint("TOPLEFT", x, -M.kopf)
 
-        r.grund = r:CreateTexture(nil, "BACKGROUND")
-        r.grund:SetAllPoints()
-
-        r.text = r:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+        r.text = St.Text(r, text, St.Leise)
         r.text:SetPoint("CENTER")
-        r.text:SetText(text)
-        r.text:SetTextColor(1, 1, 1)
+        r.text:SetJustifyH("CENTER")
+
+        r.hell = St.Scharf(r:CreateTexture(nil, "HIGHLIGHT"))
+        r.hell:SetAllPoints()
+        r.hell:SetColorTexture(1, 1, 1, 0.05)
+
+        -- Der Akzentstrich des aktiven Reiters. Zwei Punkte hoch, damit er
+        -- auch auf einem 4K-Monitor als Strich und nicht als Haar ankommt.
+        r.strich = St.Scharf(r:CreateTexture(nil, "ARTWORK"))
+        r.strich:SetPoint("BOTTOMLEFT", 0, 0)
+        r.strich:SetPoint("BOTTOMRIGHT", 0, 0)
+        r.strich:SetColorTexture(St.Ent(F.akzent))
+        r.strich:Hide()
+
+        local function strichHoehe() r.strich:SetHeight(St.Pixel(r) * 2) end
+        strichHoehe()
+        St.NachSkalierung(strichHoehe)
 
         r:SetScript("OnClick", function() reiterZeigen(welcher) end)
         return r
     end
 
-    fenster.reiterKnoepfe = reiterBauen(L.CFG_TAB_BUTTONS, 16, "BUTTONS")
-    fenster.reiterLayout  = reiterBauen(L.CFG_TAB_LAYOUT, 130, "LAYOUT")
+    fenster.reiterKnoepfe = reiterBauen(L.CFG_TAB_BUTTONS, M.rand, "BUTTONS")
+    fenster.reiterLayout  = reiterBauen(L.CFG_TAB_LAYOUT, M.rand + 104, "LAYOUT")
+
+    local reiterLinie = St.Trennlinie(fenster, F.linie, 1)
+    reiterLinie:SetPoint("TOPLEFT", 0, -(M.kopf + M.reiter))
+    reiterLinie:SetPoint("TOPRIGHT", 0, -(M.kopf + M.reiter))
+
+    local OBEN = -(M.kopf + M.reiter + M.luft)
 
     -- =====================================================================
     -- Bereich "Knoepfe"
     -- =====================================================================
     local B = CreateFrame("Frame", nil, fenster)
-    B:SetPoint("TOPLEFT", 0, -84)
+    B:SetPoint("TOPLEFT", 0, OBEN)
     B:SetPoint("BOTTOMRIGHT", 0, 0)
     fenster.bereichKnoepfe = B
 
-    local listenTitel = beschriftung(B, L.CFG_LIST)
-    listenTitel:SetPoint("TOPLEFT", 16, -4)
+    local listenTitel = beschriftung(B, L.CFG_LIST, St.Kopf)
+    listenTitel:SetPoint("TOPLEFT", M.rand, 0)
+
+    fenster.listenZahl = beschriftung(B, "", St.Aus)
+    fenster.listenZahl:SetPoint("TOPRIGHT", B, "TOPLEFT", M.rand + LISTE_BREITE, 0)
+    fenster.listenZahl:SetJustifyH("RIGHT")
 
     -- Der Listenrahmen. Mausrad statt Scrollrahmen (siehe Kopf der Datei).
-    local listenRahmen = CreateFrame("Frame", nil, B, "BackdropTemplate")
-    listenRahmen:SetPoint("TOPLEFT", 14, -22)
-    listenRahmen:SetSize(232, ZEILEN_SICHTBAR * ZEILEN_HOEHE + 4)
-    listenRahmen:SetBackdrop({
-        bgFile   = "Interface\\Buttons\\WHITE8X8",
-        edgeFile = "Interface\\Buttons\\WHITE8X8",
-        edgeSize = 1,
-    })
-    listenRahmen:SetBackdropColor(0, 0, 0, 0.35)
-    listenRahmen:SetBackdropBorderColor(0.2, 0.28, 0.36, 1)
+    local listenRahmen = CreateFrame("Frame", nil, B)
+    listenRahmen:SetPoint("TOPLEFT", M.rand, -(M.luft + M.winzig))
+    listenRahmen:SetSize(LISTE_BREITE, ZEILEN_SICHTBAR * ZEILEN_HOEHE + 4)
+    St.Karte(listenRahmen, { grund = F.feld, grundAlpha = 0.55, rand = F.linie })
+
     listenRahmen:EnableMouseWheel(true)
     listenRahmen:SetScript("OnMouseWheel", function(_, richtung)
         versatz = versatz - richtung
         listeAuffrischen()
     end)
 
-    fenster.leerHinweis = beschriftung(listenRahmen, L.CFG_EMPTY, "GameFontDisableSmall")
-    fenster.leerHinweis:SetPoint("TOPLEFT", 8, -8)
-    fenster.leerHinweis:SetWidth(210)
+    fenster.leerHinweis = beschriftung(listenRahmen, L.CFG_EMPTY, St.Aus)
+    fenster.leerHinweis:SetPoint("TOPLEFT", M.eng, -M.eng)
+    fenster.leerHinweis:SetWidth(LISTE_BREITE - 2 * M.eng)
     fenster.leerHinweis:SetJustifyH("LEFT")
 
     for i = 1, ZEILEN_SICHTBAR do
         local zeile = CreateFrame("Button", nil, listenRahmen)
-        zeile:SetSize(228, ZEILEN_HOEHE)
+        zeile:SetSize(LISTE_BREITE - 4, ZEILEN_HOEHE)
         zeile:SetPoint("TOPLEFT", 2, -((i - 1) * ZEILEN_HOEHE) - 2)
 
-        zeile.grund = zeile:CreateTexture(nil, "BACKGROUND")
+        zeile.grund = St.Scharf(zeile:CreateTexture(nil, "BACKGROUND"))
         zeile.grund:SetAllPoints()
 
-        zeile.hell = zeile:CreateTexture(nil, "HIGHLIGHT")
+        zeile.hell = St.Scharf(zeile:CreateTexture(nil, "HIGHLIGHT"))
         zeile.hell:SetAllPoints()
-        zeile.hell:SetColorTexture(1, 1, 1, 0.12)
+        zeile.hell:SetColorTexture(1, 1, 1, 0.08)
 
-        zeile.symbol = zeile:CreateTexture(nil, "ARTWORK")
+        zeile.marke = St.Scharf(zeile:CreateTexture(nil, "ARTWORK"))
+        zeile.marke:SetPoint("TOPLEFT", 0, 0)
+        zeile.marke:SetPoint("BOTTOMLEFT", 0, 0)
+        zeile.marke:SetWidth(3)
+        zeile.marke:SetColorTexture(St.Ent(F.akzent))
+        zeile.marke:Hide()
+
+        -- Die laufende Nummer in eigener Spalte statt als "1. " vor dem Text.
+        -- So stehen alle Beschriftungen untereinander auf derselben Kante,
+        -- und ab dem zehnten Knopf rutscht die Spalte nicht.
+        zeile.nummer = St.Text(zeile, nil, St.Aus)
+        zeile.nummer:SetPoint("LEFT", M.eng, 0)
+        zeile.nummer:SetWidth(16)
+        zeile.nummer:SetJustifyH("RIGHT")
+
+        zeile.symbol = St.Scharf(zeile:CreateTexture(nil, "ARTWORK"))
         zeile.symbol:SetSize(18, 18)
-        zeile.symbol:SetPoint("LEFT", 4, 0)
-        zeile.symbol:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+        zeile.symbol:SetPoint("LEFT", zeile.nummer, "RIGHT", M.eng, 0)
 
-        zeile.text = zeile:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-        zeile.text:SetPoint("LEFT", zeile.symbol, "RIGHT", 6, 0)
-        zeile.text:SetPoint("RIGHT", -4, 0)
+        zeile.text = St.Text(zeile, nil, St.Leise)
+        zeile.text:SetPoint("LEFT", zeile.symbol, "RIGHT", M.eng, 0)
+        zeile.text:SetPoint("RIGHT", -M.eng, 0)
         zeile.text:SetJustifyH("LEFT")
         zeile.text:SetWordWrap(false)
 
         zeile:SetScript("OnClick", function(self)
             gewaehlt = self.index
+            alleZuklappen()
             E:Auffrischen()
         end)
 
         zeilen[i] = zeile
     end
 
-    -- Die Knoepfe unter der Liste.
-    local hinzu = knopf(B, L.CFG_ADD, 76, function()
+    -- ---------------------------------------------------------------------
+    -- Die Knoepfe unter der Liste
+    -- ---------------------------------------------------------------------
+    -- Zwei Reihen zu zwei Knoepfen. Erst standen alle vier nebeneinander; im
+    -- Spiel war "Runter" halb abgeschnitten, und breiter durfte die Reihe
+    -- nicht werden, weil sie unter die Liste passen muss. Deutsche
+    -- Beschriftungen sind laenger als englische - eine Reihe, die auf
+    -- Englisch gerade noch passt, passt auf Deutsch nicht mehr.
+    local KNOPF_BREITE = (LISTE_BREITE - M.eng) / 2
+
+    local hinzu = knopf(B, L.CFG_ADD, KNOPF_BREITE, function()
         gewaehlt = S.KnopfHinzufuegen()
         -- Zum neuen Knopf springen, sonst legt man ihn blind am Ende an.
         versatz = math.max(0, gewaehlt - ZEILEN_SICHTBAR)
         TCD.Dock.Aufbauen()
         E:Auffrischen()
     end)
-    hinzu:SetPoint("TOPLEFT", listenRahmen, "BOTTOMLEFT", 0, -6)
+    hinzu:SetPoint("TOPLEFT", listenRahmen, "BOTTOMLEFT", 0, -M.eng)
 
-    local weg = knopf(B, L.CFG_DELETE, 76, function()
+    local weg = knopf(B, L.CFG_DELETE, KNOPF_BREITE, function()
         if S.KnopfLoeschen(gewaehlt) then
             TCD.Dock.Aufbauen()
             E:Auffrischen()
         end
     end)
-    weg:SetPoint("LEFT", hinzu, "RIGHT", 4, 0)
+    weg:SetPoint("LEFT", hinzu, "RIGHT", M.eng, 0)
 
-    -- ---------------------------------------------------------------------
-    -- Zweite Reihe: Hoch und Runter
-    -- ---------------------------------------------------------------------
-    -- Erst standen alle vier nebeneinander. Im Spiel war "Runter" halb
-    -- abgeschnitten, und breiter durfte die Reihe nicht werden: Sie muss
-    -- unter die 232 Pixel breite Liste passen, sonst ragt sie in das Formular
-    -- rechts daneben. Deutsche Beschriftungen sind laenger als englische -
-    -- eine Reihe, die auf Englisch gerade noch passt, passt auf Deutsch nicht
-    -- mehr. Zwei Reihen loesen das, ohne von der Sprache abzuhaengen.
-    local hoch = knopf(B, L.CFG_UP, 76, function()
+    local hoch = knopf(B, L.CFG_UP, KNOPF_BREITE, function()
         local neu = S.KnopfVerschieben(gewaehlt, -1)
         if neu then
             gewaehlt = neu
@@ -678,9 +1005,9 @@ local function fensterBauen()
             E:Auffrischen()
         end
     end)
-    hoch:SetPoint("TOPLEFT", hinzu, "BOTTOMLEFT", 0, -4)
+    hoch:SetPoint("TOPLEFT", hinzu, "BOTTOMLEFT", 0, -M.winzig)
 
-    local runter = knopf(B, L.CFG_DOWN, 76, function()
+    local runter = knopf(B, L.CFG_DOWN, KNOPF_BREITE, function()
         local neu = S.KnopfVerschieben(gewaehlt, 1)
         if neu then
             gewaehlt = neu
@@ -688,117 +1015,153 @@ local function fensterBauen()
             E:Auffrischen()
         end
     end)
-    runter:SetPoint("LEFT", hoch, "RIGHT", 4, 0)
+    runter:SetPoint("LEFT", hoch, "RIGHT", M.eng, 0)
+
+    -- ---------------------------------------------------------------------
+    -- Die senkrechte Trennung zwischen Liste und Formular
+    -- ---------------------------------------------------------------------
+    local trenner = St.Scharf(B:CreateTexture(nil, "ARTWORK"))
+    trenner:SetPoint("TOPLEFT", M.rand + LISTE_BREITE + M.luft + M.eng, 2)
+    trenner:SetPoint("BOTTOMLEFT", M.rand + LISTE_BREITE + M.luft + M.eng, M.rand)
+    trenner:SetColorTexture(St.Ent(F.linie))
+
+    local function trennerBreite() trenner:SetWidth(St.Pixel(B)) end
+    trennerBreite()
+    St.NachSkalierung(trennerBreite)
 
     -- ---------------------------------------------------------------------
     -- Das Formular
     -- ---------------------------------------------------------------------
-    local X = 264
-    local y = -4
+    fenster.formTitel = beschriftung(B, L.CFG_FORM, St.Kopf)
+    fenster.formTitel:SetPoint("TOPLEFT", FORM_X, 0)
+
+    local y = -(M.luft + M.winzig)
 
     -- Eine Beschriftung mit Erklaerung darueber. FontStrings nehmen keine
     -- Maus-Ereignisse an - deshalb liegt ein unsichtbarer Rahmen darauf, der
-    -- den Tooltip traegt. Das "(?)" dahinter ist der Hinweis, dass es
+    -- den Tooltip traegt. Das "?" dahinter ist der Hinweis, dass es
     -- ueberhaupt etwas zu lesen gibt; ohne ihn findet den Tooltip niemand.
     local function reihe(text, tipp, hoehe)
-        local fs = beschriftung(B, text)
-        fs:SetPoint("TOPLEFT", X, y)
+        local fs = beschriftung(B, text, St.Leise)
+        fs:SetPoint("TOPLEFT", FORM_X, y)
 
         if tipp then
-            fs:SetText(text .. " |cff7b90a5(?)|r")
+            local marke = beschriftung(B, "?", St.Akzent)
+            marke:SetPoint("LEFT", fs, "RIGHT", M.winzig + 1, 0)
 
             local fang = CreateFrame("Frame", nil, B)
-            fang:SetPoint("TOPLEFT", fs, "TOPLEFT", 0, 2)
-            fang:SetSize(fs:GetStringWidth() + 4, 16)
+            fang:SetPoint("TOPLEFT", fs, "TOPLEFT", -2, 3)
+            fang:SetPoint("BOTTOMRIGHT", marke, "BOTTOMRIGHT", 3, -3)
             fang:EnableMouse(true)
             fang:SetScript("OnEnter", function(self)
+                marke:SetFontObject(St.Normal)
                 GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
                 GameTooltip:AddLine(text, 1, 1, 1)
-                GameTooltip:AddLine(tipp, 0.7, 0.7, 0.7, true)
+                GameTooltip:AddLine(tipp, 0.7, 0.75, 0.8, true)
                 GameTooltip:Show()
             end)
-            fang:SetScript("OnLeave", function() GameTooltip:Hide() end)
+            fang:SetScript("OnLeave", function()
+                marke:SetFontObject(St.Akzent)
+                GameTooltip:Hide()
+            end)
         end
 
-        y = y - 18
+        y = y - 17
         local merk = y
-        y = y - (hoehe or 26)
+        y = y - (hoehe or (M.feld + M.luft))
         return merk
     end
 
     local yBeschriftung = reihe(L.CFG_LABEL, L.CFG_LABEL_TIP)
-    felder.beschriftung = eingabe(B, 330)
-    felder.beschriftung:SetPoint("TOPLEFT", X, yBeschriftung)
-    felder.beschriftung:SetScript("OnEditFocusLost", function(self)
+    felder.beschriftung = eingabe(B, FORM_BREITE)
+    felder.beschriftung:SetPoint("TOPLEFT", FORM_X, yBeschriftung)
+    beiFokusVerlust(felder.beschriftung, function(self)
         aendern("beschriftung", self:GetText())
     end)
 
     local yText = reihe(L.CFG_MESSAGE, L.CFG_MESSAGE_TIP)
-    felder.text = eingabe(B, 330)
-    felder.text:SetPoint("TOPLEFT", X, yText)
-    felder.text:SetScript("OnEditFocusLost", function(self)
+    felder.text = eingabe(B, FORM_BREITE)
+    felder.text:SetPoint("TOPLEFT", FORM_X, yText)
+    beiFokusVerlust(felder.text, function(self)
         aendern("text", self:GetText())
     end)
 
-    local yKanal = reihe(L.CFG_CHANNEL, L.CH_AUTO_DESC)
-    felder.kanal = auswahl(B, 180, kanalEintraege(),
-        function() local k = aktuell() return k and k.kanal or "AUTO" end,
-        function(wert) aendern("kanal", wert) end)
-    felder.kanal:SetPoint("TOPLEFT", X, yKanal)
-
     local ySymbol = reihe(L.CFG_ICON, L.CFG_ICON_TIP)
-    felder.symbol = eingabe(B, 330)
-    felder.symbol:SetPoint("TOPLEFT", X, ySymbol)
-    felder.symbol:SetScript("OnEditFocusLost", function(self)
+    felder.symbol = eingabe(B, FORM_BREITE - 32)
+    felder.symbol:SetPoint("TOPLEFT", FORM_X, ySymbol)
+    beiFokusVerlust(felder.symbol, function(self)
         aendern("symbol", self:GetText())
     end)
 
+    -- Die Vorschau neben dem Symbolfeld. Ein Pfad, den es nicht gibt, liefert
+    -- ein leeres Bild - das sieht man hier sofort, statt es an der Leiste zu
+    -- suchen.
+    local vorschau = CreateFrame("Frame", nil, B)
+    vorschau:SetSize(M.feld, M.feld)
+    vorschau:SetPoint("LEFT", felder.symbol, "RIGHT", M.eng, 0)
+    St.Karte(vorschau, { grund = F.feld, rand = F.linie })
+
+    fenster.vorschauKarte = vorschau
+    fenster.symbolVorschau = St.Scharf(vorschau:CreateTexture(nil, "ARTWORK"))
+    fenster.symbolVorschau:SetPoint("TOPLEFT", 2, -2)
+    fenster.symbolVorschau:SetPoint("BOTTOMRIGHT", -2, 2)
+
+    local yKanal = reihe(L.CFG_CHANNEL, L.CH_AUTO_DESC)
+    felder.kanal = auswahl(B, 200, kanalEintraege(),
+        function() local k = aktuell() return k and k.kanal or "AUTO" end,
+        function(wert) aendern("kanal", wert) end)
+    felder.kanal:SetPoint("TOPLEFT", FORM_X, yKanal)
+
     local yMarke = reihe(L.CFG_MARKER, L.CFG_MARKER_TIP)
-    felder.marke = auswahl(B, 180, markeEintraege(),
+    felder.marke = auswahl(B, 200, markeEintraege(),
         function() local k = aktuell() return k and k.marke or 0 end,
         function(wert) aendern("marke", wert) end)
-    felder.marke:SetPoint("TOPLEFT", X, yMarke)
+    felder.marke:SetPoint("TOPLEFT", FORM_X, yMarke)
 
     local yPing = reihe(L.CFG_PING, L.CFG_PING_TIP)
-    felder.ping = auswahl(B, 180, pingEintraege(),
+    felder.ping = auswahl(B, 200, pingEintraege(),
         function() local k = aktuell() return k and k.ping or false end,
         function(wert) aendern("ping", wert or nil) end)
-    felder.ping:SetPoint("TOPLEFT", X, yPing)
+    felder.ping:SetPoint("TOPLEFT", FORM_X, yPing)
 
     -- Der Platzhalter-Spickzettel. Er steht unten und klein: Man braucht ihn
     -- beim ersten Mal und danach nie wieder.
-    local hinweis = beschriftung(B, L.CFG_PLACEHOLDERS, "GameFontDisableSmall")
-    hinweis:SetPoint("TOPLEFT", X, y - 6)
-    hinweis:SetWidth(330)
+    local hinweis = beschriftung(B, L.CFG_PLACEHOLDERS, St.Aus)
+    hinweis:SetPoint("TOPLEFT", FORM_X, y - M.eng)
+    hinweis:SetWidth(FORM_BREITE)
     hinweis:SetJustifyH("LEFT")
 
     -- =====================================================================
     -- Bereich "Leiste"
     -- =====================================================================
     local Y = CreateFrame("Frame", nil, fenster)
-    Y:SetPoint("TOPLEFT", 0, -84)
+    Y:SetPoint("TOPLEFT", 0, OBEN)
     Y:SetPoint("BOTTOMRIGHT", 0, 0)
     Y:Hide()
     fenster.bereichLayout = Y
 
-    local zy = -8
+    local anordnungTitel = beschriftung(Y, L.CFG_GROUP_LAYOUT, St.Kopf)
+    anordnungTitel:SetPoint("TOPLEFT", M.rand, 0)
+
+    local zy = -(M.luft + M.winzig)
 
     local function setzeZahlenfeld(feld)
-        feld:SetPoint("TOPLEFT", 16, zy)
-        zy = zy - 28
+        feld:SetPoint("TOPLEFT", M.rand, zy)
+        zy = zy - (M.feld + M.eng)
     end
 
-    schalter.ausrichtung = auswahl(Y, 180, {
+    local ausTitel = beschriftung(Y, L.CFG_LAYOUT_DIR, St.Leise)
+    ausTitel:SetPoint("TOPLEFT", M.rand, zy - 5)
+    ausTitel:SetWidth(130)
+    ausTitel:SetJustifyH("LEFT")
+
+    schalter.ausrichtung = auswahl(Y, 200, {
         { wert = "horizontal", text = L.CFG_HORIZONTAL },
         { wert = "vertikal",   text = L.CFG_VERTICAL },
     }, function() return S.Dock().ausrichtung end,
        function(wert) S.Dock().ausrichtung = wert TCD.Dock.Aufbauen() end)
-    local ausTitel = beschriftung(Y, L.CFG_LAYOUT_DIR)
-    ausTitel:SetPoint("TOPLEFT", 16, zy)
-    ausTitel:SetWidth(120)
-    ausTitel:SetJustifyH("LEFT")
-    schalter.ausrichtung:SetPoint("TOPLEFT", 140, zy + 4)
-    zy = zy - 30
+    schalter.ausrichtung:SetPoint("TOPLEFT", M.rand + 134, zy)
+    zy = zy - (M.feld + M.eng)
 
     schalter.groesse = zahlenfeld(Y, L.CFG_SIZE, 16, 96, 2,
         function() return S.Dock().groesse end,
@@ -825,62 +1188,72 @@ local function fensterBauen()
         function(w) S.Dock().skalierung = w end)
     setzeZahlenfeld(schalter.skalierung)
 
+    zy = zy - M.eng
+
+    local verhaltenTitel = beschriftung(Y, L.CFG_GROUP_BEHAVIOUR, St.Kopf)
+    verhaltenTitel:SetPoint("TOPLEFT", M.rand, zy)
+    zy = zy - (M.luft + M.eng)
+
     schalter.drosselung = zahlenfeld(Y, L.CFG_THROTTLE, 0, 10, 0.5,
         function() return S.db.drosselung end,
         function(w) S.db.drosselung = w end)
     setzeZahlenfeld(schalter.drosselung)
 
-    zy = zy - 6
+    zy = zy - M.winzig
 
     schalter.beschriftungen = kasten(Y, L.CFG_SHOW_LABELS, function(an)
         S.Dock().beschriftungen = an
         TCD.Dock.Aufbauen()
     end)
-    schalter.beschriftungen:SetPoint("TOPLEFT", 16, zy)
-    zy = zy - 26
+    schalter.beschriftungen:SetPoint("TOPLEFT", M.rand, zy)
+    zy = zy - (M.knopf + M.winzig)
 
     schalter.gesperrt = kasten(Y, L.CFG_LOCKED, function(an)
         S.Dock().gesperrt = an
     end)
-    schalter.gesperrt:SetPoint("TOPLEFT", 16, zy)
-    zy = zy - 26
+    schalter.gesperrt:SetPoint("TOPLEFT", M.rand, zy)
+    zy = zy - (M.knopf + M.winzig)
 
     schalter.nurGruppe = kasten(Y, L.CFG_HIDE_SOLO, function(an)
         S.Dock().nurGruppe = an
         TCD.Dock.SichtbarkeitPruefen()
     end)
-    schalter.nurGruppe:SetPoint("TOPLEFT", 16, zy)
-    zy = zy - 34
+    schalter.nurGruppe:SetPoint("TOPLEFT", M.rand, zy)
+    zy = zy - (M.knopf + M.luft)
 
     -- Der Weg zurueck zu den mitgelieferten Ansagen. Bewusst hier unten und
-    -- nicht neben "Loeschen": Ein Fehlgriff kostet die eigenen Texte.
-    local zurueck = knopf(Y, L.CFG_DEFAULTS, 260, function()
+    -- nicht neben "Loeschen": Ein Fehlgriff kostet die eigenen Texte. Und
+    -- bewusst im Warnton - er ist der einzige Knopf im Fenster, der etwas
+    -- wegnimmt.
+    local zurueck = knopf(Y, L.CFG_DEFAULTS, 268, function()
         if S.ProfilZuruecksetzen() then
             gewaehlt, versatz = 1, 0
             TCD.Dock.Aufbauen()
             E:Auffrischen()
             TCD.Sagen(format(L.MSG_RESET_PROFILE, S.AktivesProfil()))
         end
-    end)
-    zurueck:SetPoint("TOPLEFT", 16, zy)
+    end, "warnung")
+    zurueck:SetPoint("TOPLEFT", M.rand, zy)
 
     -- ---------------------------------------------------------------------
-    -- Die beiden Erklaerungen rechts neben den Feldern
+    -- Die Erklaerungen in der rechten Spalte
     -- ---------------------------------------------------------------------
     -- Sie haengen am jeweiligen Feld, NICHT an einem festen Y-Wert. Vorher
     -- stand der Umbruch-Hinweis neben "Deckkraft" - er war stehen geblieben,
     -- als ein Feld darueber dazukam, und erklaerte damit die falsche Zeile.
     -- Ein Hinweis am falschen Ort ist schlimmer als keiner.
-    local umbruchHinweis = beschriftung(Y, L.CFG_WRAP_TIP, "GameFontDisableSmall")
-    umbruchHinweis:SetPoint("TOPLEFT", schalter.umbruch, "TOPRIGHT", 30, -4)
-    umbruchHinweis:SetWidth(330)
+    local ERKL_X = M.eng
+
+    local umbruchHinweis = beschriftung(Y, L.CFG_WRAP_TIP, St.Aus)
+    umbruchHinweis:SetPoint("TOPLEFT", schalter.umbruch, "TOPRIGHT", ERKL_X, -3)
+    umbruchHinweis:SetWidth(FORM_BREITE)
     umbruchHinweis:SetJustifyH("LEFT")
 
-    -- Die Wiederholungssperre braucht ihre Erklaerung sichtbar, nicht im Tooltip:
-    -- Eine Sperre, die man nicht versteht, stellt man auf 0.
-    local drossHinweis = beschriftung(Y, L.CFG_THROTTLE_TIP, "GameFontDisableSmall")
-    drossHinweis:SetPoint("TOPLEFT", schalter.drosselung, "TOPRIGHT", 30, -4)
-    drossHinweis:SetWidth(330)
+    -- Die Wiederholungssperre braucht ihre Erklaerung sichtbar, nicht im
+    -- Tooltip: Eine Sperre, die man nicht versteht, stellt man auf 0.
+    local drossHinweis = beschriftung(Y, L.CFG_THROTTLE_TIP, St.Aus)
+    drossHinweis:SetPoint("TOPLEFT", schalter.drosselung, "TOPRIGHT", ERKL_X, -3)
+    drossHinweis:SetWidth(FORM_BREITE)
     drossHinweis:SetJustifyH("LEFT")
 
     reiterZeigen("BUTTONS")
@@ -895,11 +1268,23 @@ function E:Auffrischen()
 
     local name = S.AktivesProfil()
     local anzeige = TCD.Vorgaben.ROLLENNAME[name]
-    fenster.profil:SetText(format("%s: |cff33ccff%s|r", L.CFG_PROFILE, anzeige and L[anzeige] or name))
+    fenster.profil:SetText(format("%s  |cff3c98e5%s|r", L.CFG_PROFILE, anzeige and L[anzeige] or name))
 
     if reiterAktiv == "BUTTONS" then
         listeAuffrischen()
         formularAuffrischen()
+
+        local eintrag = aktuell()
+        fenster.symbolVorschau:SetShown(eintrag ~= nil)
+        if eintrag then
+            local symbol = eintrag.symbol or "Interface\\Icons\\INV_Misc_QuestionMark"
+            fenster.symbolVorschau:SetTexture(symbol)
+            if TCD.Knopf.BrauchtZuschnitt(symbol) then
+                fenster.symbolVorschau:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+            else
+                fenster.symbolVorschau:SetTexCoord(0, 1, 0, 1)
+            end
+        end
     else
         layoutAuffrischen()
     end
@@ -922,6 +1307,7 @@ function E:Oeffnen(index)
 end
 
 function E:Schliessen()
+    alleZuklappen()
     if fenster then fenster:Hide() end
 end
 

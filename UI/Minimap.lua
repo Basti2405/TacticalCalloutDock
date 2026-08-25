@@ -20,6 +20,7 @@ local addonName, TCD = ...
 TCD.Minimap = {}
 local M = TCD.Minimap
 local L = TCD.L
+local St = TCD.Stil
 
 local knopf
 
@@ -79,8 +80,10 @@ function M.Erzeugen()
     knopf:SetMovable(true)
 
     -- Das Symbol. Kleiner als der Knopf und rund zugeschnitten, damit es
-    -- unter den Ring passt.
-    local symbol = knopf:CreateTexture(nil, "BACKGROUND")
+    -- unter den Ring passt. St.Scharf() schaltet die Kantenrundung ab - bei
+    -- 20 von 64 Bildpunkten ist das der Unterschied zwischen einem Symbol und
+    -- einem Fleck (die Begruendung steht im Kopf von UI\Stil.lua).
+    local symbol = St.Scharf(knopf:CreateTexture(nil, "BACKGROUND"))
     symbol:SetSize(20, 20)
     symbol:SetPoint("CENTER", -1, 1)
     symbol:SetTexture("Interface\\Icons\\Ability_Warrior_RallyingCry")
@@ -89,7 +92,7 @@ function M.Erzeugen()
 
     -- Der Ring drumherum. Genau die Textur, die auch Blizzards eigene
     -- Minikarten-Knoepfe benutzen - so faellt er nicht aus der Reihe.
-    local ring = knopf:CreateTexture(nil, "OVERLAY")
+    local ring = St.Scharf(knopf:CreateTexture(nil, "OVERLAY"))
     ring:SetSize(53, 53)
     ring:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
     ring:SetPoint("TOPLEFT")
@@ -132,7 +135,28 @@ function M.Erzeugen()
     knopf:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
     positionieren()
+    M.ZustandZeigen()
     return knopf
+end
+
+-- ---------------------------------------------------------------------------
+-- Zeigen, ob die Leiste gerade eingeblendet ist
+-- ---------------------------------------------------------------------------
+-- Der Knopf schaltet die Leiste ein und aus. Bis 1.0 sah er in beiden
+-- Faellen gleich aus - man musste die Leiste suchen, um zu wissen, was ein
+-- Klick tun wuerde. Ein abgedunkeltes Symbol beantwortet das im Vorbeisehen,
+-- und es ist genau die Sprache, die WoW selbst fuer "aus" benutzt.
+function M.ZustandZeigen()
+    if not knopf then return end
+
+    local d = TCD.Speicher.Dock()
+    if d.sichtbar then
+        knopf.symbol:SetDesaturated(false)
+        knopf.symbol:SetVertexColor(1, 1, 1)
+    else
+        knopf.symbol:SetDesaturated(true)
+        knopf.symbol:SetVertexColor(0.55, 0.55, 0.55)
+    end
 end
 
 -- ---------------------------------------------------------------------------

@@ -134,6 +134,21 @@ es testbar. `UI/` zeichnet. `Daten/Vorgaben.lua` hält die mitgelieferten
 Ansagen, `Locales/` die Texte. `Logik/Kompat.lua` ist die einzige Stelle, die
 WoW-Schnittstellen anfasst.
 
+Innerhalb von `UI/` gilt: `Stil.lua` lädt zuerst und ist die einzige Datei mit
+Farbwerten, Schriften und Maßen. Wer eine Oberfläche anfasst, holt sich dort
+eine Farbe aus `St.FARBE` und ein Maß aus `St.MASS` und erfindet keine neuen –
+sonst steht am Ende wieder ein Fenster mit sechs Blautönen und Abständen von
+4, 6, 14 und 30 darin. `Stil.lua` rechnet außerdem aus der echten
+Bildschirmauflösung zurück, wie breit ein Bildschirmpunkt in
+Oberflächeneinheiten ist; Ränder werden über `St.Umriss` gezogen und nicht
+über `SetBackdrop`, weil dessen `edgeSize` durch eine Rundung läuft und auf
+hochauflösenden Monitoren verschmiert. Die lange Begründung steht im Kopf der
+Datei.
+
+**Die Bilder unter `docs/bilder/` zeigen noch die Oberfläche von 1.0.** Sie
+müssen im Spiel neu aufgenommen werden – die Anleitung dazu steht in
+`docs/store-description.md`.
+
 ## Lizenz
 
 MIT – siehe [LICENSE](LICENSE).

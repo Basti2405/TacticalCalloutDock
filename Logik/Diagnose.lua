@@ -59,6 +59,21 @@ function D.Zeilen()
     zeile(L.DOC_TITLE)
     zeile(format(L.DOC_VERSION, tostring(version), tostring(schnittstelle), tostring(bauNummer or "?")))
     zeile(format(L.DOC_LOCALE, tostring(A.Ruf("Sprache") or "?")))
+
+    -- ---------------------------------------------------------------------
+    -- Der Bildschirm
+    -- ---------------------------------------------------------------------
+    -- Steht hier, weil "sieht unscharf aus" seit 1.1.0 eine beantwortbare
+    -- Frage ist: Wenn ein Bildschirmpunkt hier mit 1.000 Einheiten angegeben
+    -- ist, rechnet der Client 1:1 und die Raender sind so scharf, wie sie
+    -- werden koennen. Steht dort etwas deutlich unter 1, hat der Spieler
+    -- einen hochaufloesenden Monitor - und dann MUSS die Rechnung aus
+    -- UI\Stil.lua greifen, sonst verschmiert jede Kante.
+    if TCD.Stil and TCD.Stil.Pixel and type(GetPhysicalScreenSize) == "function" then
+        local breite, hoehe = GetPhysicalScreenSize()
+        zeile(format(L.DOC_SCREEN, tostring(breite), tostring(hoehe), TCD.Stil.Pixel()))
+    end
+
     zeile(" ")
 
     -- ---------------------------------------------------------------------

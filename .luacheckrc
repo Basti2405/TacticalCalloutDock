@@ -50,7 +50,11 @@ read_globals = {
     "format", "wipe", "strtrim", "tinsert",
 
     -- Rahmen und Oberflaeche. Das ist alles, was dieses Addon direkt anfasst.
-    "CreateFrame", "UIParent", "GameTooltip", "Minimap",
+    "CreateFrame", "CreateFont", "UIParent", "GameTooltip", "Minimap",
+
+    -- Die ECHTE Bildschirmaufloesung. UI\Stil.lua rechnet daraus, wie breit
+    -- ein Bildschirmpunkt in Rahmeneinheiten ist.
+    "GetPhysicalScreenSize",
 
     -- Escape soll den Editor schliessen. Die Liste ist eine Tabelle des
     -- Spiels, in die man seinen Rahmennamen eintraegt.
@@ -87,7 +91,7 @@ files["Tests/logik-test.lua"] = {
         "InCombatLockdown", "GetLocale", "GetBuildInfo", "GetInstanceInfo",
         "C_AddOns", "C_SpecializationInfo", "C_Ping", "Enum",
         "LE_PARTY_CATEGORY_INSTANCE",
-        "CreateFrame", "UIParent", "GameTooltip", "Minimap", "UISpecialFrames",
+        "CreateFrame", "CreateFont", "UIParent", "GameTooltip", "Minimap", "UISpecialFrames",
         "IsShiftKeyDown",
         "TacticalCalloutDockDB",
     },

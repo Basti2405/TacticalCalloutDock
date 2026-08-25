@@ -9,7 +9,7 @@
 ## Notes: A draggable dock of one-click tactical callouts for Mythic+ and raids: chat message, raid marker and ping in a single click.
 ## Notes-deDE: Eine verschiebbare Leiste mit taktischen Ansagen fuer Mythic+ und Raids: Chatnachricht, Zielmarkierung und Ping mit einem Klick.
 ## Author: Basti2405
-## Version: 1.0
+## Version: 1.1.0
 ## IconTexture: Interface\Icons\Ability_Warrior_RallyingCry
 
 ## SavedVariables: TacticalCalloutDockDB
@@ -65,7 +65,9 @@ Logik\Ausloesen.lua
 # Selbstdiagnose - beantwortet  /tcd doctor . Braucht alles darueber.
 Logik\Diagnose.lua
 
-# Oberflaeche. Knopf vor Dock: Das Dock legt Knoepfe an.
+# Oberflaeche. Stil ganz vorne: Farben, Schriften und die Pixelrechnung, aus
+# der sich alles Uebrige bedient. Knopf vor Dock: Das Dock legt Knoepfe an.
+UI\Stil.lua
 UI\Knopf.lua
 UI\Dock.lua
 UI\Editor.lua

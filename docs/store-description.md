@@ -369,11 +369,17 @@ Repository von hier braucht — weiter bei Schritt 2 unten.
 
 ## Ablauf der Veröffentlichung
 
-**Stand 24.08.2026:** Der Tag `v1.0` ist gesetzt und das GitHub-Release steht
-unter <https://github.com/Basti2405/TacticalCalloutDock/releases/tag/v1.0>.
-Zu CurseForge ging dabei nichts, weil Projekt-ID und `CF_API_KEY` fehlten.
-**Der Tag ist damit verbraucht** — ein zweites `git push origin v1.0` löst
-nichts mehr aus. Der Nachschub läuft deshalb über Schritt 4.
+**Stand 25.08.2026:** Es gibt zwei Tags. `v1.0` (24.08.) und `v1.1.0` (25.08.,
+die Fassung über das Aussehen — siehe `CHANGELOG.md`). Beide haben ein
+GitHub-Release, zu CurseForge ging bei keinem etwas, weil Projekt-ID und
+`CF_API_KEY` bis heute fehlen.
+
+**Das Verschieben eines verbrauchten Tags ist damit vom Tisch.** Solange die
+Projekt-ID fehlt, sammelt sich der Rückstand auf GitHub; sobald sie eingetragen
+ist, geht die *nächste* Version regulär hoch. Ein `git tag -f` auf eine
+Fassung, die schon veröffentlicht ist, wäre der falsche Weg — die 1.1.0 ist
+draußen, und wer sie heruntergeladen hat, soll nicht plötzlich anderen Inhalt
+unter derselben Nummer haben.
 
 Die verbleibenden Schritte kann nur Sebastian über seine Konten erledigen.
 
@@ -406,21 +412,23 @@ gh secret set CF_API_KEY --repo Basti2405/TacticalCalloutDock
 Der Befehl fragt den Wert danach interaktiv ab. Kontrolle mit `gh secret list`
 — dort muss `CF_API_KEY` auftauchen (der Wert selbst bleibt verborgen).
 
-**4. Den Tag `v1.0` auf den neuen Commit schieben.**
+**4. Einen neuen Tag setzen.**
 Schritt 2 macht ohnehin einen Commit — die Projekt-ID steht in der `.toc`.
-Weil die 1.0 auf CurseForge noch nie erschienen ist, ist das Verschieben des
-Tags sauberer als eine Pflichtversion 1.0.1 für eine einzige Metadatenzeile:
+Danach die Nummer in der `.toc` um eine Stelle erhöhen und tagen:
 
 ```sh
 git commit -am "CurseForge-Projekt-ID eingetragen"
 git push origin main
-git tag -f v1.0 && git push --force origin v1.0
+git tag v1.1.1 && git push origin v1.1.1
 ```
 
 Der Workflow läuft dann als **Tag-Lauf**: Er prüft den Tag gegen die `.toc`,
 lässt die Tests laufen, baut das Paket und lädt es als reguläre Fassung zu
-CurseForge. Das GitHub-Release unter `v1.0` wird dabei an Ort und Stelle
-aktualisiert, die URL bleibt.
+CurseForge.
+
+Die 1.1.1 wäre damit die erste Fassung, die auf CurseForge erscheint — mit
+`CHANGELOG.md` als Beschreibung sieht auch nachvollziehbar aus, was in 1.0 und
+1.1.0 davor passiert ist.
 
 *Nur zum Ausprobieren:* `gh workflow run release.yml --ref main` startet den
 Workflow ohne Tag. Dann steht in `GITHUB_REF` der Zweig, der Tag-Abgleich wird

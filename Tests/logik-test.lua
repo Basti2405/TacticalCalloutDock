@@ -110,7 +110,7 @@ function GetInstanceInfo() return "Testinstanz", "party" end
 
 C_AddOns = {
     GetAddOnMetadata = function(_, feld)
-        if feld == "Version" then return "1.0" end
+        if feld == "Version" then return "1.1.0" end
         if feld == "Interface" then return "120100" end
         return nil
     end,
@@ -144,10 +144,19 @@ function CreateFrame()
     return f
 end
 
+-- CreateFont gibt dasselbe her: UI\Stil.lua legt beim Laden acht
+-- Schriftobjekte an, und keine ihrer Methoden liefert hier einen Wert
+-- zurueck, den irgendjemand liest.
+CreateFont = CreateFrame
+
 UIParent = CreateFrame()
 GameTooltip = CreateFrame()
 Minimap = CreateFrame()
 UISpecialFrames = {}
+
+-- GetPhysicalScreenSize wird ABSICHTLICH nicht nachgebaut: UI\Stil.lua faellt
+-- ohne sie auf das Grundmass von 768 zurueck, und genau dieser Zweig soll hier
+-- mitgeladen werden - er ist der, den aeltere Clients nehmen.
 
 function IsShiftKeyDown() return false end
 
@@ -176,6 +185,7 @@ laden("Logik/Speicher.lua")
 laden("Logik/Ziele.lua")
 laden("Logik/Ausloesen.lua")
 laden("Logik/Diagnose.lua")
+laden("UI/Stil.lua")
 laden("UI/Knopf.lua")
 laden("UI/Dock.lua")
 
@@ -624,7 +634,7 @@ do
 
     local text = table.concat(zeilen, "\n")
     melde(text:find("ChatSenden"), "sie nennt die wichtigste Schnittstelle")
-    melde(text:find("1.0", 1, true), "sie nennt die Fassung")
+    melde(text:find("1.1.0", 1, true), "sie nennt die Fassung")
 
     -- Alles Wichtige ist in der Testumgebung vorhanden - der Bericht muss
     -- also gruen ausfallen.

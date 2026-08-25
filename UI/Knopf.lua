@@ -27,6 +27,8 @@ local addonName, TCD = ...
 TCD.Knopf = {}
 local K = TCD.Knopf
 local L = TCD.L
+local St = TCD.Stil
+local F = St.FARBE
 
 -- Der Vorrat. Index -> Rahmen. Waechst nur, nie schrumpfen.
 local vorrat = {}
@@ -117,6 +119,7 @@ function K.Holen(eltern, index)
     -- Das Symbol. Ein Stueck vom Rand eingerueckt, damit der Rahmen darunter
     -- sichtbar bleibt - sonst sieht die Leiste aus wie eine Bilderreihe.
     rahmen.symbol = rahmen:CreateTexture(nil, "ARTWORK")
+    rahmen.einzug = 2
     rahmen.symbol:SetPoint("TOPLEFT", 2, -2)
     rahmen.symbol:SetPoint("BOTTOMRIGHT", -2, 2)
 
@@ -139,40 +142,72 @@ function K.Holen(eltern, index)
         rahmen.symbol:SetTexelSnappingBias(0)
     end
 
-    rahmen.rand = rahmen:CreateTexture(nil, "BACKGROUND")
+    -- ---------------------------------------------------------------
+    -- Der Rahmen um das Symbol
+    -- ---------------------------------------------------------------
+    -- Zwei Teile: eine dunkle Flaeche, die unter dem eingerueckten Symbol
+    -- hervorschaut, und darauf ein Umriss von genau EINEM Bildschirmpunkt.
+    --
+    -- Bis 1.0 gab es nur die Flaeche. Der Knopf hatte damit einen 2 Punkte
+    -- breiten, weichen dunklen Saum - das ist der Grund, warum eine Reihe
+    -- solcher Knoepfe aussieht wie aufgeklebte Bilder und nicht wie eine
+    -- Leiste. Ein harter Strich aussen macht daraus ein Element mit Kante.
+    rahmen.rand = St.Scharf(rahmen:CreateTexture(nil, "BACKGROUND"))
     rahmen.rand:SetAllPoints()
-    rahmen.rand:SetColorTexture(0, 0, 0, 0.6)
+    rahmen.rand:SetColorTexture(St.Ent(F.grund, 0.85))
 
-    local hell = rahmen:CreateTexture(nil, "HIGHLIGHT")
+    rahmen.umriss = St.Umriss(rahmen, F.linieHell, 0.55)
+
+    local hell = St.Scharf(rahmen:CreateTexture(nil, "HIGHLIGHT"))
     hell:SetAllPoints(rahmen.symbol)
-    hell:SetColorTexture(1, 1, 1, 0.25)
+    hell:SetColorTexture(1, 1, 1, 0.22)
 
     rahmen:SetPushedTextOffset(0, 0)
+
+    -- Unter der Maus wandert der Umriss auf den Akzent. Das ist die Antwort
+    -- auf die Frage "ist das ueberhaupt ein Knopf?", und sie kommt, bevor der
+    -- Tooltip aufgeht.
+    rahmen:SetScript("OnMouseDown", function(self)
+        self.symbol:SetPoint("TOPLEFT", self.einzug, -(self.einzug + 1))
+        self.symbol:SetPoint("BOTTOMRIGHT", -self.einzug, -self.einzug + 1)
+    end)
+    rahmen:SetScript("OnMouseUp", function(self)
+        self.symbol:SetPoint("TOPLEFT", self.einzug, -self.einzug)
+        self.symbol:SetPoint("BOTTOMRIGHT", -self.einzug, self.einzug)
+    end)
 
     -- Die Beschriftung liegt UEBER dem Symbol am unteren Rand, nicht
     -- darunter: So bleibt der Knopf quadratisch und die Leiste behaelt ihre
     -- Hoehe, egal ob Beschriftungen an oder aus sind.
-    rahmen.text = rahmen:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+    -- Weiss und in der schmalen Hausschrift, nicht im gelben
+    -- GameFontNormalSmall: Die Beschriftung liegt auf einem farbigen Symbol,
+    -- und Gelb auf Orange ist im Kampf nicht zu lesen. Die schmale Schrift
+    -- bringt bei gleicher Hoehe rund ein Fuenftel mehr Zeichen in dieselbe
+    -- Breite - genau das, was deutsche Beschriftungen auf einem 34 Punkte
+    -- breiten Knopf brauchen.
+    rahmen.text = St.Text(rahmen, nil, St.Klein)
     rahmen.text:SetPoint("BOTTOMLEFT", 1, 2)
     rahmen.text:SetPoint("BOTTOMRIGHT", -1, 2)
     rahmen.text:SetJustifyH("CENTER")
     rahmen.text:SetWordWrap(false)
 
-    -- Weiss statt des gelben Vorgabetons von GameFontNormalSmall: Die
-    -- Beschriftung liegt auf einem farbigen Symbol, und Gelb auf Orange ist
-    -- im Kampf nicht zu lesen.
-    rahmen.text:SetTextColor(1, 1, 1)
-
     -- Ein schmaler dunkler Streifen hinter der Beschriftung. Ohne ihn ist
     -- weisser Text auf einem hellen Symbol nicht zu lesen.
-    rahmen.textGrund = rahmen:CreateTexture(nil, "BORDER")
+    rahmen.textGrund = St.Scharf(rahmen:CreateTexture(nil, "BORDER"))
     rahmen.textGrund:SetPoint("TOPLEFT", rahmen.text, "TOPLEFT", -1, 1)
     rahmen.textGrund:SetPoint("BOTTOMRIGHT", rahmen.text, "BOTTOMRIGHT", 1, -1)
-    rahmen.textGrund:SetColorTexture(0, 0, 0, 0.7)
+    rahmen.textGrund:SetColorTexture(0, 0, 0, 0.78)
 
     rahmen:SetScript("OnClick", beiKlick)
-    rahmen:SetScript("OnEnter", tooltipZeigen)
-    rahmen:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+    rahmen:SetScript("OnEnter", function(self)
+        self.umriss:Faerben(F.akzent, 0.95)
+        tooltipZeigen(self)
+    end)
+    rahmen:SetScript("OnLeave", function(self)
+        self.umriss:Faerben(F.linieHell, 0.55)
+        GameTooltip:Hide()
+    end)
 
     vorrat[index] = rahmen
     return rahmen
@@ -205,17 +240,19 @@ end
 -- Deutsche Woerter sind laenger als englische, und die Knopfgroesse ist frei
 -- einstellbar; eine feste Schriftgroesse kann das nicht auffangen.
 --
--- Also von oben herunter probieren, bis es passt. Unter 7 Punkt wird nicht
--- weiter verkleinert - was dann noch nicht passt, darf abgeschnitten werden,
--- denn lesbar waere es ohnehin nicht mehr.
+-- Also von oben herunter probieren, bis es passt. Die Grenzen sind seit
+-- 1.1.0 11 bis 8 Punkt statt 10 bis 7: Die schmale Hausschrift traegt bei
+-- kleinen Groessen weiter als FRIZQT, weil ihre Striche senkrecht stehen und
+-- damit auf ganze Punktreihen fallen. Was bei 8 Punkt noch nicht passt, darf
+-- abgeschnitten werden - lesbar waere es ohnehin nicht mehr.
 local function beschriftungEinpassen(fs, text, breite)
     local pfad, _, flaggen = fs:GetFont()
     fs:SetText(text)
 
-    local groesse = 10
+    local groesse = 11
     fs:SetFont(pfad, groesse, flaggen)
 
-    while groesse > 7 and fs:GetStringWidth() > breite do
+    while groesse > 8 and fs:GetStringWidth() > breite do
         groesse = groesse - 1
         fs:SetFont(pfad, groesse, flaggen)
     end
@@ -229,6 +266,14 @@ function K.Bestuecken(rahmen, knopf, index, groesse, beschriftungen)
     rahmen.index = index
 
     rahmen:SetSize(groesse, groesse)
+
+    -- Der Einzug haelt den Rahmen sichtbar. Bei kleinen Knoepfen kostet er
+    -- zu viel Bild: 2 Punkte von 18 sind ein Fuenftel der Kante, und das
+    -- Symbol wird unerkennbar. Ab 28 Punkten Breite - dieselbe Schwelle, ab
+    -- der auch die Beschriftung erscheint - sind es 2, darunter 1.
+    rahmen.einzug = groesse >= 28 and 2 or 1
+    rahmen.symbol:SetPoint("TOPLEFT", rahmen.einzug, -rahmen.einzug)
+    rahmen.symbol:SetPoint("BOTTOMRIGHT", -rahmen.einzug, rahmen.einzug)
 
     local symbol = knopf.symbol or "Interface\\Icons\\INV_Misc_QuestionMark"
     rahmen.symbol:SetTexture(symbol)

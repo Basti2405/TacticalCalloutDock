@@ -130,6 +130,17 @@ L.PING_ASSIST   = "Assist"
 -- Der Editor
 -- ---------------------------------------------------------------------------
 L.CFG_TITLE        = "Tactical Callout Dock - Editor"
+
+-- Steht klein hinter dem Namen in der Kopfzeile des Editors. Es sagt, was
+-- dieses Fenster IST - "Editor" allein liest sich wie ein Texteditor.
+L.CFG_SUBTITLE     = "Callout editor"
+
+-- Ueberschriften der drei Bereiche. Sie ordnen ein Fenster, in dem sonst
+-- zwanzig Felder gleichberechtigt untereinander stehen.
+L.CFG_FORM             = "Selected callout"
+L.CFG_GROUP_LAYOUT     = "Arrangement"
+L.CFG_GROUP_BEHAVIOUR  = "Behaviour"
+
 L.CFG_TAB_BUTTONS  = "Buttons"
 L.CFG_TAB_LAYOUT   = "Dock"
 L.CFG_PROFILE      = "Profile"
@@ -199,6 +210,7 @@ L.SUB_NO_MOUSEOVER = "no mouseover"
 L.DOC_TITLE      = "Self-check"
 L.DOC_VERSION    = "Version %s, interface %s, client %s"
 L.DOC_LOCALE     = "Client language: %s"
+L.DOC_SCREEN     = "Screen: %s x %s - one screen pixel is %.3f interface units"
 L.DOC_API_OK     = "|cff59d98cok|r   %s  (%s)"
 L.DOC_API_FAIL   = "|cffe74c3cMISSING|r  %s"
 L.DOC_API_OPT    = "|cfff1c40fabsent|r  %s  (optional - %s)"

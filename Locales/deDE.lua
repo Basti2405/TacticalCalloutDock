@@ -92,6 +92,12 @@ L.PING_ASSIST   = "Hilfe"
 -- Der Editor
 -- ---------------------------------------------------------------------------
 L.CFG_TITLE        = "Tactical Callout Dock – Editor"
+L.CFG_SUBTITLE     = "Ansagen-Editor"
+
+L.CFG_FORM             = "Gewählte Ansage"
+L.CFG_GROUP_LAYOUT     = "Anordnung"
+L.CFG_GROUP_BEHAVIOUR  = "Verhalten"
+
 L.CFG_TAB_BUTTONS  = "Knöpfe"
 L.CFG_TAB_LAYOUT   = "Leiste"
 L.CFG_PROFILE      = "Profil"
@@ -158,6 +164,7 @@ L.SUB_NO_MOUSEOVER = "kein Mouseover"
 -- ---------------------------------------------------------------------------
 L.DOC_TITLE      = "Selbstdiagnose"
 L.DOC_VERSION    = "Version %s, Schnittstelle %s, Client %s"
+L.DOC_SCREEN     = "Bildschirm: %s x %s – ein Bildschirmpunkt sind %.3f Oberflächeneinheiten"
 L.DOC_LOCALE     = "Sprache des Clients: %s"
 L.DOC_API_OK     = "|cff59d98cok|r   %s  (%s)"
 L.DOC_API_FAIL   = "|cffe74c3cFEHLT|r  %s"
